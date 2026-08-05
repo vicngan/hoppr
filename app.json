@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Hoppr",
+    "slug": "hoppr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand/hoppr-mark.png",
+    "scheme": "hoppr",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f7f2e8",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f7f2e8",
+        "foregroundImage": "./assets/brand/hoppr-mark.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/brand/hoppr-mark.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f7f2e8",
+          "image": "./assets/brand/hoppr-mark.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Hoppr uses your location to suggest places near you."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
