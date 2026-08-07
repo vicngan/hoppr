@@ -14,10 +14,23 @@ const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
+/**
+ * Expo Router's web "static" output prerenders on Node (no `window`), but
+ * `@react-native-async-storage/async-storage`'s web adapter touches
+ * `window`/`localStorage` as soon as the client calls `storage.getItem`.
+ * Fall back to an in-memory no-op during that pass; the browser re-hydrates
+ * with real `AsyncStorage` once `window` exists.
+ */
+const noopStorage = {
+  getItem: async () => null,
+  setItem: async () => {},
+  removeItem: async () => {},
+};
+
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url as string, anonKey as string, {
       auth: {
-        storage: AsyncStorage,
+        storage: typeof window === 'undefined' ? noopStorage : AsyncStorage,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

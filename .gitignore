@@ -31,10 +31,14 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
 *.tsbuildinfo
+
+# eval harness run output
+eval/rerank/results/
 
 example
 

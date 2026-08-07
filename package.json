@@ -16,6 +16,7 @@
     "expo-font": "~57.0.1",
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.2",
+    "expo-image-picker": "~57.0.7",
     "expo-linking": "~57.0.5",
     "expo-location": "~57.0.7",
     "expo-router": "~57.0.10",
@@ -36,17 +37,21 @@
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.14"
   },
-  "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
-  },
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "eval:rerank": "tsx eval/rerank/run.ts"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "@types/node": "^24.0.0",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.3"
   },
   "private": true
 }
