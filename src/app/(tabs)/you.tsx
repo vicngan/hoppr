@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Screen, Text, Kicker, MeterBar, PillButton } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { useTaste } from '@/core/taste/store';
+import { useLibrary } from '@/core/library/store';
 import { confidentTraits } from '@/core/taste/profile';
 import { TAG_LABELS } from '@/core/taste/tags';
 
@@ -12,6 +13,9 @@ export default function YouScreen() {
   const router = useRouter();
   const profile = useTaste((s) => s.profile);
   const reset = useTaste((s) => s.reset);
+  const clearLibrary = useLibrary((s) => s.clear);
+  const savedCount = useLibrary((s) => Object.keys(s.saved).length);
+  const ratedCount = useLibrary((s) => Object.keys(s.ratings).length);
 
   const traits = useMemo(() => confidentTraits(profile).slice(0, 6), [profile]);
   const answers = profile.answers.length;
@@ -31,7 +35,7 @@ export default function YouScreen() {
             You
           </Text>
           <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 4 }}>
-            {answers} {answers === 1 ? 'answer' : 'answers'}
+            {answers} answered · {savedCount} saved · {ratedCount} rated
           </Text>
         </View>
       </View>
@@ -84,11 +88,14 @@ export default function YouScreen() {
         onPress={() => router.push('/(tabs)/ask')}
       />
 
-      {learned && (
+      {(learned || savedCount > 0 || ratedCount > 0) && (
         <PillButton
           label="Forget what you know about me"
           style={{ marginTop: spacing.md, borderColor: colors.ink20 }}
-          onPress={reset}
+          onPress={() => {
+            reset();
+            clearLibrary();
+          }}
         />
       )}
     </Screen>

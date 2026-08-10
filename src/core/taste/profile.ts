@@ -5,6 +5,8 @@ export type AnswerRecord = {
   questionId: string;
   optionId: string;
   at: number;
+  /** the question's axis, so later question-generation can avoid repeating it */
+  axis?: string;
 };
 
 /**
@@ -45,6 +47,22 @@ export function applyDeltas(
   return { weights, answers: [...profile.answers, record] };
 }
 
+/**
+ * Adjust weights directly by pre-scaled deltas, without recording an answer.
+ * Used for implicit signals (ratings, saves) that teach the profile but aren't
+ * question answers.
+ */
+export function applyWeightDeltas(
+  profile: TasteProfile,
+  deltas: Partial<Record<Tag, number>>,
+): TasteProfile {
+  const weights = { ...profile.weights };
+  for (const [tag, delta] of Object.entries(deltas) as [Tag, number][]) {
+    weights[tag] = clamp((weights[tag] ?? 0) + delta);
+  }
+  return { ...profile, weights };
+}
+
 /** Sorted, thresholded traits for display ("what we're fairly sure of"). */
 export function confidentTraits(profile: TasteProfile, min = 0.12) {
   return (Object.entries(profile.weights) as [Tag, number][])
@@ -67,4 +85,19 @@ export function tasteFit(profile: TasteProfile, placeTags: Tag[]): number {
 /** Whether we've learned anything yet (drives empty-state copy). */
 export function hasSignal(profile: TasteProfile): boolean {
   return profile.answers.length > 0;
+}
+
+/**
+ * A compact, DATA (not prose) summary of the profile for the Claude ranker —
+ * strongest likes plus strong dislikes (negative weights), each with its weight.
+ * Reuses `confidentTraits` for the likes side. Kept terse so it's cheap to send
+ * and gives the model something to reason over without free-text ambiguity.
+ */
+export function profileDigest(profile: TasteProfile): string {
+  const likes = confidentTraits(profile, 0.12).map(([t, w]) => `${t}:${w.toFixed(2)}`);
+  const dislikes = (Object.entries(profile.weights) as [Tag, number][])
+    .filter(([, w]) => w <= -0.12)
+    .sort((a, b) => a[1] - b[1])
+    .map(([t, w]) => `${t}:${w.toFixed(2)}`);
+  return `likes=[${likes.join(',')}] dislikes=[${dislikes.join(',')}]`;
 }

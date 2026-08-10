@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo } from 'react';
-import { View, StyleSheet, type ViewStyle, type DimensionValue } from 'react-native';
+import { View, Image, StyleSheet, type ViewStyle, type DimensionValue } from 'react-native';
 import { colors, radius as radii, stripe } from '@/theme/tokens';
 
 type Props = {
@@ -11,6 +11,9 @@ type Props = {
   children?: ReactNode;
   /** width of each diagonal band */
   band?: number;
+  /** optional full-bleed image (e.g. a static map) shown over the stripes */
+  imageUri?: string | null;
+  onImageError?: () => void;
 };
 
 /**
@@ -26,6 +29,8 @@ export function StripePlaceholder({
   style,
   children,
   band = 9,
+  imageUri,
+  onImageError,
 }: Props) {
   // A large rotated square guarantees full coverage for any placeholder up to
   // ~700px on its longest side (plenty for a phone column).
@@ -51,6 +56,14 @@ export function StripePlaceholder({
           ))}
         </View>
       </View>
+      {imageUri ? (
+        <Image
+          source={{ uri: imageUri }}
+          resizeMode="cover"
+          onError={onImageError}
+          style={styles.image}
+        />
+      ) : null}
       {children ? <View style={styles.overlay}>{children}</View> : null}
     </View>
   );
@@ -60,6 +73,7 @@ const styles = StyleSheet.create({
   clip: { overflow: 'hidden', backgroundColor: stripe.light },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   rotor: { flexDirection: 'row', transform: [{ rotate: '45deg' }] },
+  image: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: 10 },
 });
 

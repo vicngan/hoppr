@@ -5,6 +5,7 @@ import { Screen, Text, PillButton, Kicker, ProgressDots, Card } from '@/componen
 import { colors, spacing } from '@/theme/tokens';
 import { useTaste } from '@/core/taste/store';
 import { engine } from '@/core/engine';
+import { useNextQuestion } from '@/core/discovery';
 import { QUESTIONS } from '@/core/questions';
 import { PLACES } from '@/core/places';
 import { DEFAULT_CENTER } from '@/core/location';
@@ -20,9 +21,8 @@ export default function AskScreen() {
   const answer = useTaste((s) => s.answer);
   const reset = useTaste((s) => s.reset);
 
+  const { question, answeredCount } = useNextQuestion(PLACES, null);
   const askedIds = useMemo(() => profile.answers.map((a) => a.questionId), [profile.answers]);
-  const question = engine.nextQuestion({ profile, places: PLACES, userCoords: null, askedIds });
-  const answeredCount = new Set(askedIds).size;
 
   // exhausted the bank → show the current best pick
   if (!question) {
@@ -101,7 +101,7 @@ export default function AskScreen() {
         ))}
       </View>
 
-      <ProgressDots count={QUESTIONS.length} active={answeredCount} />
+      <ProgressDots count={QUESTIONS.length} active={Math.min(answeredCount, QUESTIONS.length)} />
 
       <Pressable onPress={() => router.push('/chat')} style={styles.talk}>
         <Text variant="bodyMedium" size={13} color={colors.ink55}>

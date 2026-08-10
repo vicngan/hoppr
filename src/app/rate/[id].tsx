@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
 import { Screen, Text, Kicker, PillButton } from '@/components/ui';
 import { BackButton } from '@/components/BackButton';
 import { colors, radius, spacing } from '@/theme/tokens';
-import { findPlaceById } from '@/core/places';
+import { fonts } from '@/theme/fonts';
+import { usePlace } from '@/core/places-store';
+import { useLibrary, selectRating } from '@/core/library/store';
 
 const SPEC_QS: { label: string; options: string[] }[] = [
   { label: 'Noise', options: ['Quiet', 'Medium', 'Loud'] },
@@ -16,13 +17,24 @@ const SPEC_QS: { label: string; options: string[] }[] = [
 
 const STAR_NOTES = ['', 'Not for me', 'It was fine', 'Solid', 'Really good', 'Would send a friend'];
 
-/** Rate a place + tag the specs. Slice 2 persists this and feeds the profile. */
+/** Rate a place + tag the specs. Persists to the library and teaches the taste profile. */
 export default function RateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const place = findPlaceById(id);
-  const [stars, setStars] = useState(0);
-  const [picks, setPicks] = useState<Record<string, string>>({});
+  const place = usePlace(id);
+  const existing = useLibrary(selectRating(id ?? ''));
+  const rate = useLibrary((s) => s.rate);
+
+  const [stars, setStars] = useState(existing?.stars ?? 0);
+  const [picks, setPicks] = useState<Record<string, string>>(existing?.specs ?? {});
+  const [note, setNote] = useState(existing?.note ?? '');
+
+  const submit = () => {
+    if (!place || stars === 0) return;
+    rate(place, stars, picks, note.trim() || undefined);
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/discover');
+  };
 
   return (
     <Screen contentStyle={{ paddingTop: 60 }}>
@@ -63,7 +75,9 @@ export default function RateScreen() {
                   compact
                   selected={picks[q.label] === o}
                   style={{ flex: 1 }}
-                  onPress={() => setPicks((p) => ({ ...p, [q.label]: o }))}
+                  onPress={() =>
+                    setPicks((p) => (p[q.label] === o ? omit(p, q.label) : { ...p, [q.label]: o }))
+                  }
                 />
               ))}
             </View>
@@ -71,14 +85,30 @@ export default function RateScreen() {
         ))}
       </View>
 
+      <Kicker style={{ marginTop: 26, marginBottom: 12 }}>Anything worth telling someone?</Kicker>
+      <TextInput
+        value={note}
+        onChangeText={setNote}
+        placeholder="Sit at the back-left table, it has two outlets…"
+        placeholderTextColor={colors.ink40}
+        multiline
+        style={styles.note}
+      />
+
       <PillButton
-        label="Post rating"
+        label={stars === 0 ? 'Pick a rating first' : existing ? 'Update rating' : 'Post rating'}
         variant="solid"
-        style={{ marginTop: spacing.xxl }}
-        onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/discover'))}
+        style={{ marginTop: spacing.xl, opacity: stars === 0 ? 0.5 : 1 }}
+        onPress={submit}
       />
     </Screen>
   );
+}
+
+function omit<T extends Record<string, string>>(obj: T, key: string): Record<string, string> {
+  const next = { ...obj };
+  delete next[key];
+  return next;
 }
 
 const styles = StyleSheet.create({
@@ -93,6 +123,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   starOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  starGlyph: { fontFamily: 'JetBrainsMono_500Medium' },
+  starGlyph: { fontFamily: fonts.monoMedium },
   optRow: { flexDirection: 'row', gap: 6 },
+  note: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.ink14,
+    borderRadius: radius.md,
+    padding: 15,
+    minHeight: 90,
+    textAlignVertical: 'top',
+    fontFamily: fonts.sans,
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.ink,
+  },
 });

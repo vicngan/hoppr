@@ -1,7 +1,9 @@
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { StripePlaceholder, MatchBadge, Text } from '@/components/ui';
+import { MatchBadge, Text } from '@/components/ui';
+import { PlaceImage } from '@/components/PlaceImage';
 import { colors } from '@/theme/tokens';
+import { mapsConfigured } from '@/core/maps';
 import { CATEGORY_LABEL } from '@/core/places';
 import { fmtDistance } from '@/core/discovery';
 import type { RankedPlace } from '@/core/engine';
@@ -20,16 +22,18 @@ export function PlaceCard({ rp }: { rp: RankedPlace }) {
     <Pressable
       onPress={() => router.push(`/place/${rp.place.id}`)}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.92 : 1 }]}>
-      <StripePlaceholder width={158} height={158} radius={14}>
+      <PlaceImage coords={rp.place.coords} photo={rp.place.photo} width={158} height={158} radius={14} mapSize={320}>
         <View style={styles.badge}>
           <MatchBadge value={`${rp.match}%`} />
         </View>
-        <View style={styles.caption}>
-          <Text variant="kicker" size={9} color={colors.ink40}>
-            photo — visitor upload
-          </Text>
-        </View>
-      </StripePlaceholder>
+        {!mapsConfigured ? (
+          <View style={styles.caption}>
+            <Text variant="kicker" size={9} color={colors.ink40}>
+              photo — visitor upload
+            </Text>
+          </View>
+        ) : null}
+      </PlaceImage>
       <Text variant="bodyMedium" size={14} style={styles.name} numberOfLines={1}>
         {rp.place.name}
       </Text>

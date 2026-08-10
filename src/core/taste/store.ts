@@ -2,13 +2,16 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { applyDeltas, emptyProfile, type TasteProfile } from './profile';
+import { applyDeltas, applyWeightDeltas, emptyProfile, type TasteProfile } from './profile';
+import type { Tag } from './tags';
 import type { Question, QOption } from '../questions';
 
 type TasteState = {
   profile: TasteProfile;
   /** record an answer → learn from it */
   answer: (q: Question, o: QOption) => void;
+  /** implicit signal (rating, save) → nudge weights without logging an answer */
+  reinforce: (deltas: Partial<Record<Tag, number>>) => void;
   /** wipe everything Hoppr knows */
   reset: () => void;
   /** has the profile been rehydrated from storage yet */
@@ -32,8 +35,10 @@ export const useTaste = create<TasteState>()(
             questionId: q.id,
             optionId: o.id,
             at: Date.now(),
+            axis: q.axis,
           }),
         })),
+      reinforce: (deltas) => set((s) => ({ profile: applyWeightDeltas(s.profile, deltas) })),
       reset: () => set({ profile: emptyProfile() }),
     }),
     {

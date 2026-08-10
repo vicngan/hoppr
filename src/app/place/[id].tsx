@@ -1,12 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Kicker, Card, StripePlaceholder, MeterBar, PillButton } from '@/components/ui';
+import { Text, Kicker, Card, MeterBar, PillButton } from '@/components/ui';
+import { PlaceImage } from '@/components/PlaceImage';
+import { mapsConfigured } from '@/core/maps';
 import { BackButton } from '@/components/BackButton';
 import { colors, radius, spacing } from '@/theme/tokens';
-import { findPlaceById, deriveSpecs, placeBadges, CATEGORY_LABEL } from '@/core/places';
+import { deriveSpecs, placeBadges, CATEGORY_LABEL } from '@/core/places';
+import { usePlace } from '@/core/places-store';
 import { useRanked, fmtDistance } from '@/core/discovery';
+import { useLibrary, selectIsSaved, selectRating } from '@/core/library/store';
+import { useTaste } from '@/core/taste/store';
+import { useMenu, useMenuStore } from '@/core/menu/store';
+import { recommendDish } from '@/core/menu/recommend';
 
 /** Place detail. Match %, distance and reason come from the live engine ranking. */
 export default function PlaceScreen() {
@@ -14,10 +21,19 @@ export default function PlaceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { ranked } = useRanked();
-  const place = findPlaceById(id);
-  const [saved, setSaved] = useState(false);
+  const place = usePlace(id);
+  const saved = useLibrary(selectIsSaved(id ?? ''));
+  const rating = useLibrary(selectRating(id ?? ''));
+  const toggleSave = useLibrary((s) => s.toggleSave);
+  const profile = useTaste((s) => s.profile);
+  const menu = useMenu(id ?? '');
+  const foodPrefs = useMenuStore((s) => s.prefs);
 
   const rp = useMemo(() => ranked.find((r) => r.place.id === id), [ranked, id]);
+  const dish = useMemo(
+    () => (place ? recommendDish(menu, profile, foodPrefs, place.category) : null),
+    [menu, profile, foodPrefs, place],
+  );
   const specs = useMemo(() => (place ? deriveSpecs(place) : []), [place]);
 
   if (!place) {
@@ -41,14 +57,16 @@ export default function PlaceScreen() {
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: spacing.xxxl }} showsVerticalScrollIndicator={false}>
-      <StripePlaceholder height={220} radius={0}>
+      <PlaceImage coords={place.coords} photo={place.photo} height={220} radius={0} mapSize={640}>
         <BackButton floating style={{ position: 'absolute', top: insets.top + 8, left: spacing.xl }} />
-        <View style={styles.heroCaption}>
-          <Text variant="kicker" size={9} color={colors.ink40}>
-            photo — owner or visitor upload
-          </Text>
-        </View>
-      </StripePlaceholder>
+        {!mapsConfigured ? (
+          <View style={styles.heroCaption}>
+            <Text variant="kicker" size={9} color={colors.ink40}>
+              photo — owner or visitor upload
+            </Text>
+          </View>
+        ) : null}
+      </PlaceImage>
 
       <View style={styles.body}>
         <View style={styles.badges}>
@@ -81,9 +99,12 @@ export default function PlaceScreen() {
             <PillButton
               label={saved ? 'Saved to your list' : 'Save for later'}
               selected={saved}
-              onPress={() => setSaved((s) => !s)}
+              onPress={() => toggleSave(place)}
             />
-            <PillButton label="I've been here — rate it" onPress={() => router.push(`/rate/${place.id}`)} />
+            <PillButton
+              label={rating ? `You rated it ${rating.stars}★ — edit` : "I've been here — rate it"}
+              onPress={() => router.push(`/rate/${place.id}`)}
+            />
           </View>
         </Card>
 
@@ -102,17 +123,42 @@ export default function PlaceScreen() {
           ))}
         </View>
 
-        <Card accent style={{ marginTop: 24, marginBottom: 24 }}>
+        <Card accent style={{ marginTop: 24, marginBottom: 24 }} onPress={() => router.push(`/menu/${place.id}`)}>
           <Kicker accent style={{ marginBottom: 10 }}>
             Order this
           </Kicker>
-          <Text variant="serif" size={22}>
-            {place.category === 'bar' ? 'The house negroni' : place.category === 'restaurant' ? 'The set menu, for two' : 'Honey oat cortado'}
-          </Text>
-          <Text variant="body" size={13} color={colors.ink70} style={{ marginTop: 9 }}>
-            The menu chooser — snap a menu and Hoppr picks for your taste — arrives
-            with the AI layer in a later build.
-          </Text>
+          {dish ? (
+            <>
+              <View style={styles.dishHead}>
+                <Text variant="serif" size={22} style={{ flex: 1 }}>
+                  {dish.item.name}
+                </Text>
+                {dish.item.price != null ? (
+                  <Text variant="bodyMedium" size={12} style={{ fontFamily: 'JetBrainsMono_500Medium' }}>
+                    ${dish.item.price.toFixed(2)}
+                  </Text>
+                ) : null}
+              </View>
+              <Text variant="body" size={13} color={colors.ink70} style={{ marginTop: 9 }}>
+                {dish.reason}
+              </Text>
+              <Text variant="kicker" size={10} color={colors.accent} style={{ marginTop: 14 }}>
+                See the full menu →
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text variant="serif" size={20}>
+                No menu here yet.
+              </Text>
+              <Text variant="body" size={13} color={colors.ink70} style={{ marginTop: 9 }}>
+                Snap a photo of the menu and Hoppr will read it and pick what fits you.
+              </Text>
+              <Text variant="kicker" size={10} color={colors.accent} style={{ marginTop: 14 }}>
+                Add the menu →
+              </Text>
+            </>
+          )}
         </Card>
 
         <Kicker style={{ marginBottom: 12 }}>What people say</Kicker>
@@ -154,6 +200,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 },
   badge: { borderWidth: 1, borderColor: colors.ink16, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: 9 },
   stats: { flexDirection: 'row', gap: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.ink10 },
+  dishHead: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   specGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   spec: {
     width: '47%',

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,15 +10,22 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useAppFonts } from '@/theme/fonts';
 import { colors } from '@/theme/tokens';
 import { queryClient } from '@/core/query';
+import { GlobalTabBar } from '@/components/GlobalTabBar';
+import { useLocationStore } from '@/core/location-store';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
+  const locationHydrated = useLocationStore((s) => s.hydrated);
 
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    if (locationHydrated) useLocationStore.getState().initLocation();
+  }, [locationHydrated]);
 
   if (!fontsLoaded && !fontError) return null;
 
@@ -26,18 +34,31 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.paper },
-              animation: 'slide_from_right',
-            }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="chat" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="place/[id]" />
-            <Stack.Screen name="category/[id]" />
-            <Stack.Screen name="rate/[id]" options={{ animation: 'slide_from_bottom' }} />
-          </Stack>
+          {/* Navigator fills the space above a single persistent tab bar, so the
+              five tabs stay visible on every screen — tabs and pushed stack
+              routes alike. */}
+          <View style={{ flex: 1 }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.paper },
+                animation: 'slide_from_right',
+              }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="chat" options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="place/[id]" />
+              <Stack.Screen name="category/[id]" />
+              <Stack.Screen name="menu/[id]" />
+              <Stack.Screen name="rate/[id]" options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="hop/lobby" />
+              <Stack.Screen name="hop/answer" />
+              <Stack.Screen name="hop/swipe" />
+              <Stack.Screen name="hop/pick" />
+              <Stack.Screen name="hop/plan" />
+              <Stack.Screen name="hop/join" options={{ animation: 'slide_from_bottom' }} />
+            </Stack>
+          </View>
+          <GlobalTabBar />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Kicker, PillButton } from '@/components/ui';
 import { PlaceCard } from '@/components/PlaceCard';
+import { LocationPill } from '@/components/LocationPill';
+import { LocationPicker } from '@/components/LocationPicker';
 import { colors, spacing } from '@/theme/tokens';
 import { useRanked, buildRows, filterRanked } from '@/core/discovery';
 
@@ -17,6 +19,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [filter, setFilter] = useState('For you');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const { ranked, learned, precise, locationStatus } = useRanked();
 
   const filtered = useMemo(() => filterRanked(ranked, filter), [ranked, filter]);
@@ -38,10 +41,15 @@ export default function DiscoverScreen() {
         <Text variant="display" size={32}>
           Discover
         </Text>
-        <Text variant="body" size={13} color={colors.ink50} style={{ marginTop: 4 }}>
+        <View style={{ marginTop: 10, alignSelf: 'flex-start' }}>
+          <LocationPill onPress={() => setPickerOpen(true)} />
+        </View>
+        <Text variant="body" size={13} color={colors.ink50} style={{ marginTop: 8 }}>
           {subtitle}
         </Text>
       </View>
+
+      <LocationPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
         <PillButton

@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Screen, Text, Kicker, StripePlaceholder } from '@/components/ui';
+import { Screen, Text, Kicker } from '@/components/ui';
+import { PlaceImage } from '@/components/PlaceImage';
 import { BackButton } from '@/components/BackButton';
 import { colors, radius } from '@/theme/tokens';
 import { useRanked } from '@/core/discovery';
@@ -23,7 +24,7 @@ export default function CategoryScreen() {
       <View style={{ gap: 14 }}>
         {ranked.map((rp) => (
           <View key={rp.place.id} style={styles.row}>
-            <StripePlaceholder width={96} radius={0} />
+            <PlaceImage coords={rp.place.coords} photo={rp.place.photo} width={96} radius={0} mapSize={200} />
             <View style={styles.body}>
               <View style={styles.top}>
                 <Text variant="serif" size={18} style={{ flex: 1 }}>

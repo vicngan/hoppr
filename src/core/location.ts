@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
+import { useLocationStore, DEFAULT_CENTER } from './location-store';
 import type { Coords } from './engine/types';
 
-/** Fallback center (downtown Ann Arbor) when permission is denied or pending. */
-export const DEFAULT_CENTER: Coords = { lat: 42.2808, lng: -83.743 };
+export { DEFAULT_CENTER };
 
 type LocationState = {
   coords: Coords;
@@ -13,42 +11,13 @@ type LocationState = {
 };
 
 /**
- * Best-effort user location for distance ranking. Requests foreground
- * permission once; always returns usable coords (falling back to the city
- * center) so the feed never blocks on a permission prompt.
+ * Best-effort user location for distance ranking, backed by the shared
+ * `location-store`. Screens across the app share one permission request and
+ * GPS fetch instead of each doing their own.
  */
 export function useUserLocation(): LocationState {
-  const [state, setState] = useState<LocationState>({
-    coords: DEFAULT_CENTER,
-    precise: false,
-    status: 'pending',
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (cancelled) return;
-        if (status !== 'granted') {
-          setState((s) => ({ ...s, status: 'denied' }));
-          return;
-        }
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        if (cancelled) return;
-        setState({
-          coords: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-          precise: true,
-          status: 'granted',
-        });
-      } catch {
-        if (!cancelled) setState((s) => ({ ...s, status: 'denied' }));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return state;
+  const coords = useLocationStore((s) => s.coords);
+  const precise = useLocationStore((s) => s.precise);
+  const status = useLocationStore((s) => s.status);
+  return { coords, precise, status };
 }

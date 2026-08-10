@@ -91,7 +91,22 @@ create or replace function public.places_nearby(
   in_lng double precision,
   radius_m double precision default 5000
 )
-returns table (like public.places including all, distance_m double precision)
+returns table (
+  id text,
+  name text,
+  category text,
+  area text,
+  lat double precision,
+  lng double precision,
+  geom geography(Point, 4326),
+  popularity real,
+  price smallint,
+  tags text[],
+  blurb text,
+  source text,
+  created_at timestamptz,
+  distance_m double precision
+)
 language sql stable
 as $$
   select p.*, st_distance(p.geom, st_setsrid(st_makepoint(in_lng, in_lat), 4326)::geography) as distance_m

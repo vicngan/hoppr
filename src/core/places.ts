@@ -14,8 +14,31 @@ export type Place = {
   price: number;
   tags: Tag[];
   blurb: string;
+  /** Google Places (New) photo resource name, when sourced from Google */
+  photo?: string;
   quotes?: { text: string; who: string }[];
+  /** 0..5 raw rating, when known — kept separate from `popularity` so hidden-gem detection isn't lost in that single scalar */
+  rating?: number;
+  /** raw review count, when known */
+  reviewCount?: number;
 };
+
+/** Rating/review thresholds for the "Hidden gems" row — high rating, still under the radar. */
+const HIDDEN_GEM_MIN_RATING = 4.4;
+const HIDDEN_GEM_MAX_REVIEWS = 200;
+
+/**
+ * A place is a "hidden gem" when it's rated highly but hasn't accumulated many
+ * reviews yet. Requires known review data — a place with no review count is
+ * treated as unknown, not as a gem, so this only ever flags real signal.
+ */
+export function isHiddenGem(place: Place): boolean {
+  return (
+    (place.rating ?? 0) >= HIDDEN_GEM_MIN_RATING &&
+    place.reviewCount != null &&
+    place.reviewCount <= HIDDEN_GEM_MAX_REVIEWS
+  );
+}
 
 const T = TAGS;
 
@@ -61,6 +84,8 @@ export const PLACES: Place[] = [
     price: 1,
     tags: [T.study, T.quiet, T.moody, T.solo, T.lingering, T.comfy],
     blurb: 'Reading nooks upstairs, warm lamps, and free tea refills.',
+    rating: 4.7,
+    reviewCount: 38,
   },
   {
     id: 'cadence',
@@ -94,6 +119,8 @@ export const PLACES: Place[] = [
     price: 3,
     tags: [T.drinks, T.moody, T.quiet, T.solo, T.splurge],
     blurb: 'Small, warm, and a properly made negroni.',
+    rating: 4.8,
+    reviewCount: 52,
   },
   {
     id: 'westerly',
@@ -149,6 +176,8 @@ export const PLACES: Place[] = [
     price: 2,
     tags: [T.photo, T.bright, T.hangout, T.group, T.lively],
     blurb: 'Rooftop light at golden hour; bring a friend and a camera.',
+    rating: 4.6,
+    reviewCount: 91,
   },
   {
     id: 'stackhouse',
