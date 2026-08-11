@@ -8,6 +8,8 @@ import type { Question, QOption } from '../questions';
 
 type TasteState = {
   profile: TasteProfile;
+  /** bumped on every reset() so a fresh empty profile still reads as a new session */
+  sessionId: number;
   /** record an answer → learn from it */
   answer: (q: Question, o: QOption) => void;
   /** implicit signal (rating, save) → nudge weights without logging an answer */
@@ -28,6 +30,7 @@ export const useTaste = create<TasteState>()(
   persist(
     (set) => ({
       profile: emptyProfile(),
+      sessionId: 0,
       hydrated: false,
       answer: (q, o) =>
         set((s) => ({
@@ -39,7 +42,7 @@ export const useTaste = create<TasteState>()(
           }),
         })),
       reinforce: (deltas) => set((s) => ({ profile: applyWeightDeltas(s.profile, deltas) })),
-      reset: () => set({ profile: emptyProfile() }),
+      reset: () => set((s) => ({ profile: emptyProfile(), sessionId: s.sessionId + 1 })),
     }),
     {
       name: 'hoppr.taste.v1',

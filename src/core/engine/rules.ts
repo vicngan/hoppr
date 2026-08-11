@@ -58,8 +58,10 @@ export class RulesEngine implements RecoEngine {
     if (remaining.length === 0) return null;
 
     // Prefer the question whose tags we currently know least about (lowest
-    // accumulated conviction) — i.e. reduce the biggest unknown first.
-    let pick = remaining[0];
+    // accumulated conviction) — i.e. reduce the biggest unknown first. Ties
+    // (e.g. every question on a fresh profile, all at coverage 0) are broken
+    // randomly so "start fresh" doesn't always resurface the same question.
+    let candidates = [remaining[0]];
     let pickCoverage = Infinity;
     for (const q of remaining) {
       const tags = new Set<Tag>();
@@ -68,10 +70,12 @@ export class RulesEngine implements RecoEngine {
       for (const t of tags) coverage += Math.abs(ctx.profile.weights[t] ?? 0);
       if (coverage < pickCoverage) {
         pickCoverage = coverage;
-        pick = q;
+        candidates = [q];
+      } else if (coverage === pickCoverage) {
+        candidates.push(q);
       }
     }
-    return pick;
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
   rankPlaces(ctx: EngineContext): RankedPlace[] {

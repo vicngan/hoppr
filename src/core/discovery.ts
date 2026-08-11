@@ -102,6 +102,7 @@ function buildAskedContext(answers: { questionId: string; optionId: string; axis
  */
 export function useNextQuestion(places: Place[], userCoords: Coords | null) {
   const profile = useTaste((s) => s.profile);
+  const sessionId = useTaste((s) => s.sessionId);
   const lifetimeAskedIds = useMemo(() => profile.answers.map((a) => a.questionId), [profile.answers]);
 
   const fallback = useMemo(
@@ -113,7 +114,10 @@ export function useNextQuestion(places: Place[], userCoords: Coords | null) {
   const askedContext = useMemo(() => buildAskedContext(profile.answers), [profile.answers]);
 
   const ai = useQuery({
-    queryKey: ['nextQuestion', digest, lifetimeAskedIds.length],
+    // sessionId disambiguates "Start fresh" from the app's very first empty
+    // profile — without it, an empty profile always digests to the same key
+    // and React Query would keep serving the first-ever cached question.
+    queryKey: ['nextQuestion', sessionId, digest, lifetimeAskedIds.length],
     enabled: aiQuestionAvailable(),
     staleTime: 0,
     queryFn: () => aiNextQuestion(digest, askedContext, lifetimeAskedIds),

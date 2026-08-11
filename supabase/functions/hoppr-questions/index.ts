@@ -42,19 +42,32 @@ const SCHEMA = {
     kicker: { type: 'string' },
     prompt: { type: 'string' },
     options: {
+      // Anthropic's json_schema structured output only supports minItems/maxItems
+      // of 0 or 1 on arrays — the 2-4 option count is enforced in code below instead.
       type: 'array',
-      minItems: 2,
-      maxItems: 4,
       items: {
         type: 'object',
         additionalProperties: false,
         properties: {
           id: { type: 'string' },
           label: { type: 'string' },
+          // An open string-keyed map isn't expressible under Anthropic's strict
+          // structured output (additionalProperties must be false, which then
+          // requires every key spelled out as `properties` — and spelling out
+          // all 18 tags trips its schema complexity limit). A fixed-shape array
+          // of {tag, delta} pairs sidesteps both constraints; converted back to
+          // the client's `Record<Tag, number>` shape below.
           deltas: {
-            type: 'object',
-            additionalProperties: { type: 'number', minimum: -1, maximum: 1 },
-            propertyNames: { enum: TAGS_ENUM },
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                tag: { type: 'string', enum: TAGS_ENUM },
+                delta: { type: 'number' },
+              },
+              required: ['tag', 'delta'],
+            },
           },
         },
         required: ['id', 'label', 'deltas'],
@@ -67,9 +80,10 @@ const SCHEMA = {
 const SYSTEM =
   'You generate ONE new multiple-choice question for Hoppr, a place-discovery app, ' +
   "to learn about ONE person's taste. Hoppr's tag vocabulary (the ONLY values allowed " +
-  `in any option's "deltas" object) is: ${TAGS_ENUM.join(', ')}. ` +
-  'Each option maps to a subset of these tags with a delta in [-1, 1] indicating how ' +
-  'strongly picking it implies that tag (favor magnitudes 0.3-1.0; 1-3 tags per option is plenty). ' +
+  `for a "tag" in any option's "deltas" list) is: ${TAGS_ENUM.join(', ')}. ` +
+  'Each option maps to a subset of these tags via `deltas: [{tag, delta}, ...]`, delta in ' +
+  '[-1, 1] indicating how strongly picking it implies that tag ' +
+  '(favor magnitudes 0.3-1.0; 1-3 tags per option is plenty). ' +
   "Write in Hoppr's voice: a short kicker (a few words), a one-sentence prompt, and 2-4 punchy, " +
   'concrete options (not vague "somewhat/very" scales). The question must be clearly different in ' +
   'wording and angle from every question already asked (given below), and should probe an axis or ' +
@@ -97,10 +111,19 @@ Deno.serve(async (req) => {
         ? '(none yet — this is their first question)'
         : asked.map((a) => `axis=${a.axis ?? '?'} picked=${a.optionId}`).join('; ');
 
+    // A same digest + empty asked-context (e.g. right after "start fresh")
+    // sends an identical prompt every time, which makes the model converge on
+    // the same "obvious" opening question. Force real topic variety by
+    // randomly assigning a focus tag the question must center on.
+    const focusTag = TAGS_ENUM[Math.floor(Math.random() * TAGS_ENUM.length)];
+
     const userText =
       `Taste digest: ${digest ?? '(none yet)'}\n\n` +
       `Already asked (most recent first): ${askedText}\n\n` +
       `Exclude these ids (do not reuse): [${exclude.join(', ')}]\n\n` +
+      `Center this question's options mostly around the tag "${focusTag}" (still following the ` +
+      'axis/nuance guidance above) — don\'t mention the tag name itself, just let it drive the ' +
+      'options.\n\n' +
       'Generate the next question now.';
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -113,6 +136,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 768,
+        temperature: 1,
         system: SYSTEM,
         output_config: { format: { type: 'json_schema', schema: SCHEMA } },
         messages: [{ role: 'user', content: [{ type: 'text', text: userText }] }],
@@ -134,7 +158,7 @@ Deno.serve(async (req) => {
       axis?: string;
       kicker?: string;
       prompt?: string;
-      options?: { id: string; label: string; deltas?: Record<string, number> }[];
+      options?: { id: string; label: string; deltas?: { tag?: string; delta?: number }[] }[];
     };
 
     // ── The enforced anti-hallucination contract ──────────────────────────────
@@ -148,8 +172,8 @@ Deno.serve(async (req) => {
     const options = (parsed.options ?? [])
       .map((o) => {
         const deltas: Record<string, number> = {};
-        for (const [tag, delta] of Object.entries(o.deltas ?? {})) {
-          if (!tagSet.has(tag) || typeof delta !== 'number' || Number.isNaN(delta)) continue;
+        for (const { tag, delta } of o.deltas ?? []) {
+          if (!tag || !tagSet.has(tag) || typeof delta !== 'number' || Number.isNaN(delta)) continue;
           deltas[tag] = Math.max(-1, Math.min(1, delta));
         }
         return { id: String(o.id ?? '').slice(0, 40), label: String(o.label ?? '').slice(0, 60), deltas };
