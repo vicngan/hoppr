@@ -69,6 +69,37 @@ export type Hop = {
   slotId: string | null;
   /** slotId → member ids who voted for it. */
   slotVotes: Record<string, string[]>;
+
+  // --- Additive fields below: written only by the Plan-Together wizard's
+  // `commitToHop()` (see `plan-store.ts`), via `store.ts`'s own `setPlanDetails`
+  // action. The code-invite lobby path (`hop/*.tsx`) never populates these —
+  // they extend the `planned` status's payload rather than replacing `slotId`/
+  // `slotVotes`, which stay the mechanism that actually drives lobby→…→planned.
+  /** wizard-chosen ISO date, e.g. '2026-08-20' — richer than the fixed TIME_SLOTS. */
+  planDate?: string | null;
+  /** wizard-chosen time, e.g. '19:30'. */
+  planTime?: string | null;
+  reserveDetails?: PlanReserveDetails | null;
+  preorderDetails?: PlanPreorderDetails | null;
+};
+
+/**
+ * Additive: the Plan-Together wizard's richer "reserve" step payload. Mirrors
+ * `plan-store.ts`'s `PlanReserveDetails` shape (declared here, canonically, so
+ * `Hop` can reference it without a circular import — `plan-store.ts` re-exports
+ * it). The code-invite lobby path (`hop/*.tsx`) never sets this.
+ */
+export type PlanReserveDetails = {
+  partySize: number;
+  notes?: string;
+  /** reservations aren't wired to a real provider this pass */
+  status: 'not_requested' | 'requested' | 'coming_soon';
+};
+
+/** Additive: the Plan-Together wizard's "pre-order" step payload. */
+export type PlanPreorderDetails = {
+  itemIds: string[];
+  notes?: string;
 };
 
 /** Per-place swipe tally used to reveal the Group Pick. */

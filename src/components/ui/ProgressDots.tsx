@@ -1,16 +1,17 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { colors } from '@/theme/tokens';
 
 type Props = {
   count: number;
   /** number of filled (answered/active) dots */
   active: number;
+  style?: StyleProp<ViewStyle>;
 };
 
 /** The row of short dashes tracking progress through the Ask question flow. */
-export function ProgressDots({ count, active }: Props) {
+export function ProgressDots({ count, active, style }: Props) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, style]}>
       {Array.from({ length: count }, (_, i) => (
         <View
           key={i}

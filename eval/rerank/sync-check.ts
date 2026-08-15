@@ -18,7 +18,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EDGE_FN_PATH = path.resolve(__dirname, '../../supabase/functions/hoppr-rank/index.ts');
 
 function evalLiteral(source: string): unknown {
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+   
   return new Function(`'use strict'; return (${source});`)();
 }
 

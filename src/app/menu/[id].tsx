@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
@@ -14,6 +14,91 @@ import { DIETARY_LABEL, type Dietary, type MenuItem } from '@/core/menu/types';
 import { aiAvailable, aiExtractMenu } from '@/core/ai/client';
 
 const DIETS: Dietary[] = ['veg', 'vegan', 'gf'];
+
+/**
+ * `menu-entry` bottom sheet: photo / browse / describe, 3 options (SCREEN_MAP
+ * `menu-entry` row). Presented as a `Modal` from inside this screen rather
+ * than as a separate `Stack.Screen` route — `_layout.tsx` (integration
+ * owner's file) isn't touched by this package, and `menu/[id]` is already
+ * registered there without the `slide_from_bottom` animation `rate/[id]` uses.
+ * This reproduces that same slide-up sheet convention (paper sheet, `radius.sheet`,
+ * translucent scrim) at the component level instead.
+ */
+function MenuEntrySheet({
+  visible,
+  onClose,
+  onPhoto,
+  onBrowse,
+  onDescribe,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onPhoto: () => void;
+  onBrowse: () => void;
+  onDescribe: () => void;
+}) {
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={sheetStyles.scrim} onPress={onClose} />
+      <View style={sheetStyles.sheet}>
+        <View style={sheetStyles.handle} />
+        <Kicker style={{ marginBottom: 6 }}>How should Hoppr help?</Kicker>
+        <Text variant="display" size={22} style={{ marginBottom: 18 }}>
+          Order this
+        </Text>
+        <Pressable style={sheetStyles.option} onPress={onPhoto}>
+          <Text variant="bodyMedium" size={15}>
+            📷  Snap the menu
+          </Text>
+          <Text variant="body" size={12} color={colors.ink50} style={{ marginTop: 3 }}>
+            Hoppr reads the photo and points at what fits you
+          </Text>
+        </Pressable>
+        <Pressable style={sheetStyles.option} onPress={onBrowse}>
+          <Text variant="bodyMedium" size={15}>
+            📋  Browse the menu
+          </Text>
+          <Text variant="body" size={12} color={colors.ink50} style={{ marginTop: 3 }}>
+            See the full list and Hoppr&apos;s pick
+          </Text>
+        </Pressable>
+        <Pressable style={[sheetStyles.option, { borderBottomWidth: 0 }]} onPress={onDescribe}>
+          <Text variant="bodyMedium" size={15}>
+            💬  Describe what you want
+          </Text>
+          <Text variant="body" size={12} color={colors.ink50} style={{ marginTop: 3 }}>
+            Tell Hoppr your mood, get a pick
+          </Text>
+        </Pressable>
+        <PillButton label="Cancel" onPress={onClose} style={{ marginTop: 10 }} />
+      </View>
+    </Modal>
+  );
+}
+
+const sheetStyles = StyleSheet.create({
+  scrim: { flex: 1, backgroundColor: 'rgba(20,17,13,0.4)' },
+  sheet: {
+    backgroundColor: colors.paper,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.ink16,
+    marginBottom: 16,
+  },
+  option: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.ink08,
+  },
+});
 
 /**
  * The "Order this" menu chooser. Shows the taste-matched pick + alternatives,
@@ -33,6 +118,10 @@ export default function MenuScreen() {
   const [showManual, setShowManual] = useState(false);
   const [mName, setMName] = useState('');
   const [mPrice, setMPrice] = useState('');
+  /** menu-entry sheet opens by default on arrival at this route (SCREEN_MAP). */
+  const [showEntry, setShowEntry] = useState(true);
+  /** menu-photo sub-state — a simulated OCR result, no real vision pipeline. */
+  const [showPhotoMock, setShowPhotoMock] = useState(false);
 
   const pick = useMemo(
     () => (place ? recommendDish(items, profile, prefs, place.category) : null),
@@ -119,8 +208,31 @@ export default function MenuScreen() {
     setMPrice('');
   }
 
+  if (showPhotoMock) {
+    return (
+      <MenuPhotoMock
+        placeName={place.name}
+        pick={pick}
+        onClose={() => setShowPhotoMock(false)}
+      />
+    );
+  }
+
   return (
     <Screen contentStyle={{ paddingTop: 60 }}>
+      <MenuEntrySheet
+        visible={showEntry}
+        onClose={() => setShowEntry(false)}
+        onPhoto={() => {
+          setShowEntry(false);
+          setShowPhotoMock(true);
+        }}
+        onBrowse={() => setShowEntry(false)}
+        onDescribe={() => {
+          setShowEntry(false);
+          setShowManual(true);
+        }}
+      />
       <BackButton style={{ marginBottom: 18 }} />
       <Kicker style={{ marginBottom: 10 }}>{place.name} · menu</Kicker>
       <Text variant="display" size={28} style={{ marginBottom: 18 }}>
@@ -150,7 +262,7 @@ export default function MenuScreen() {
       {pick ? (
         <Card accent style={{ marginBottom: spacing.lg }}>
           <Kicker accent style={{ marginBottom: 10 }}>
-            Hoppr's pick for you
+            Hoppr&apos;s pick for you
           </Kicker>
           <View style={styles.dishHead}>
             <Text variant="serif" size={24} style={{ flex: 1 }}>
@@ -281,6 +393,127 @@ function groupBySection(items: MenuItem[]): [string, MenuItem[]][] {
   }
   return [...map.entries()];
 }
+
+type DishPickLike = ReturnType<typeof recommendDish>;
+
+/**
+ * `menu-photo` sub-state: a static "scanned menu" mock visual. There's no
+ * real vision pipeline for this pass (see `aiExtractMenu` above, which is
+ * the actual OCR path when the AI backend is configured) — this is a
+ * simulated result screen reached from the entry sheet's "Snap the menu"
+ * option, highlighting the same real recommendation from `menu/recommend.ts`
+ * rather than fabricated copy.
+ */
+function MenuPhotoMock({
+  placeName,
+  pick,
+  onClose,
+}: {
+  placeName: string;
+  pick: DishPickLike;
+  onClose: () => void;
+}) {
+  return (
+    <Screen contentStyle={{ paddingTop: 60 }}>
+      <BackButton style={{ marginBottom: 18 }} />
+      <Kicker style={{ marginBottom: 10 }}>{placeName} · scanned menu</Kicker>
+      <Text variant="display" size={26} style={{ marginBottom: 8 }}>
+        Got it — here&apos;s what stood out
+      </Text>
+      <Text variant="body" size={13} color={colors.ink55} style={{ marginBottom: 20 }}>
+        A simulated scan for now — Hoppr highlighted the pick that fits your taste.
+      </Text>
+
+      <View style={photoMockStyles.scanFrame}>
+        <View style={photoMockStyles.scanLine} />
+        <Text variant="kicker" size={9} color={colors.ink40} style={{ marginBottom: 10 }}>
+          MENU · PHOTO
+        </Text>
+        {pick ? (
+          <>
+            <View style={photoMockStyles.highlightRow}>
+              <Text variant="bodyMedium" size={14} style={{ flex: 1 }}>
+                {pick.item.name}
+              </Text>
+              {pick.item.price != null ? (
+                <Text variant="bodyMedium" size={12} color={colors.ink60}>
+                  ${pick.item.price.toFixed(2)}
+                </Text>
+              ) : null}
+            </View>
+            {pick.alternatives.slice(0, 2).map((a) => (
+              <View key={a.item.id} style={photoMockStyles.plainRow}>
+                <Text variant="body" size={13} color={colors.ink60} style={{ flex: 1 }}>
+                  {a.item.name}
+                </Text>
+                {a.item.price != null ? (
+                  <Text variant="body" size={12} color={colors.ink45}>
+                    ${a.item.price.toFixed(2)}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </>
+        ) : (
+          <Text variant="body" size={13} color={colors.ink55}>
+            No items to highlight yet — add this menu by hand below.
+          </Text>
+        )}
+      </View>
+
+      {pick ? (
+        <Card accent style={{ marginTop: 18 }}>
+          <Kicker accent style={{ marginBottom: 8 }}>
+            Hoppr&apos;s pick
+          </Kicker>
+          <Text variant="serif" size={20}>
+            {pick.item.name}
+          </Text>
+          <Text variant="body" size={13} color={colors.ink70} style={{ marginTop: 8 }}>
+            {pick.reason}
+          </Text>
+        </Card>
+      ) : null}
+
+      <PillButton label="Back to menu" variant="solid" style={{ marginTop: spacing.xl }} onPress={onClose} />
+    </Screen>
+  );
+}
+
+const photoMockStyles = StyleSheet.create({
+  scanFrame: {
+    borderWidth: 1.5,
+    borderColor: colors.ink16,
+    borderRadius: radius.lg,
+    borderStyle: 'dashed',
+    padding: spacing.lg,
+    backgroundColor: colors.card,
+  },
+  scanLine: {
+    position: 'absolute',
+    top: '45%',
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.accent,
+    opacity: 0.5,
+  },
+  highlightRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    backgroundColor: 'rgba(200,67,28,0.1)',
+    borderRadius: radius.sm,
+    padding: 10,
+    marginBottom: 8,
+  },
+  plainRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    paddingVertical: 6,
+  },
+});
 
 const styles = StyleSheet.create({
   prefs: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: spacing.xl },

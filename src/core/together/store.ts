@@ -67,6 +67,19 @@ type TogetherState = {
   /** Lock the winning time. */
   lockSlot: () => void;
 
+  /**
+   * Merge the Plan-Together wizard's additive planned-state fields (real ISO
+   * date/time, reserve/preorder details — see `types.ts`) onto the current
+   * hop. This is the wizard's *only* write surface into `Hop` beyond the
+   * other public actions above (`invite`, `beginAnswers`, `finishAnswering`,
+   * `swipe`, `finishSwiping`, `voteSlot`, `lockSlot`) — it never touches
+   * `slotId`/`slotVotes`/`status`, which stay driven by `voteSlot`/`lockSlot`
+   * so the wizard goes through the same state machine as the code-invite path.
+   */
+  setPlanDetails: (
+    patch: Partial<Pick<Hop, 'planDate' | 'planTime' | 'reserveDetails' | 'preorderDetails'>>,
+  ) => void;
+
   /** Apply an authoritative hop pushed from the backend (realtime inbound). */
   applyRemote: (hop: Hop) => void;
   /** (Re)subscribe to a hop's realtime updates; no-op keyless. Internal. */
@@ -235,6 +248,12 @@ export const useTogether = create<TogetherState>()(
           const hop = get().hop;
           if (!hop) return;
           push({ ...hop, slotId: winningSlot(hop), status: 'planned' });
+        },
+
+        setPlanDetails: (patch) => {
+          const hop = get().hop;
+          if (!hop) return;
+          push({ ...hop, ...patch });
         },
 
         applyRemote: (hop) => set({ hop }),

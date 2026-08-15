@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Screen, Text, Kicker, Card, PillButton, MatchBadge } from '@/components/ui';
 import { PlaceImage } from '@/components/PlaceImage';
-import { colors, spacing, radius } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 import { useTogether, pickTallies } from '@/core/together';
 import type { PickTally } from '@/core/together';
 import { usePlaces } from '@/core/places-repo';
@@ -36,7 +36,7 @@ export default function PickScreen() {
   const { places } = usePlaces(coords);
 
   useEffect(() => {
-    if (hydrated && !hop) router.replace('/(tabs)/together');
+    if (hydrated && !hop) router.replace('/together');
   }, [hydrated, hop, router]);
 
   const tallies: PickTally[] = useMemo(

@@ -40,7 +40,14 @@ export function Text({ variant = 'body', size, color, center, style, ...rest }: 
 function sizeOverride(variant: Variant, size: number) {
   // serif/display read best with tight leading; sans/mono a touch looser
   const ratio = variant === 'display' ? 1.05 : variant === 'serif' ? 1.3 : 1.4;
-  return { fontSize: size, lineHeight: Math.round(size * ratio) };
+  const override: { fontSize: number; lineHeight: number; letterSpacing?: number } = {
+    fontSize: size,
+    lineHeight: Math.round(size * ratio),
+  };
+  // display tracking is em-based in the design (~-0.019em) — keep it
+  // proportional so headlines don't read cramped/loose away from the base size.
+  if (variant === 'display') override.letterSpacing = Math.round(size * -0.019 * 100) / 100;
+  return override;
 }
 
 const variantStyles = StyleSheet.create({

@@ -46,8 +46,10 @@ export function PillButton({ label, onPress, variant = 'outline', selected, comp
 function resolve(variant: Variant, selected?: boolean): ViewStyle {
   if (variant === 'solid') return { backgroundColor: colors.ink, borderColor: colors.ink };
   if (variant === 'ink') return { backgroundColor: colors.ink, borderColor: colors.ink };
-  // outline
-  if (selected) return { backgroundColor: colors.ink, borderColor: colors.ink };
+  // outline — the design reserves ink/black for primary CTAs only; every
+  // selection/active/filter state (onboarding pills, category filters, map
+  // toggle) uses the accent color instead.
+  if (selected) return { backgroundColor: colors.accent, borderColor: colors.accent };
   return { backgroundColor: colors.card, borderColor: colors.ink16 };
 }
 

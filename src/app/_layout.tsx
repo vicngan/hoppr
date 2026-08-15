@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -18,6 +18,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
   const locationHydrated = useLocationStore((s) => s.hydrated);
+  const pathname = usePathname();
+  const showTabBar = !pathname.startsWith('/onboarding');
 
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
@@ -44,7 +46,6 @@ export default function RootLayout() {
                 contentStyle: { backgroundColor: colors.paper },
                 animation: 'slide_from_right',
               }}>
-              <Stack.Screen name="(tabs)" />
               <Stack.Screen name="chat" options={{ animation: 'slide_from_bottom' }} />
               <Stack.Screen name="place/[id]" />
               <Stack.Screen name="category/[id]" />
@@ -58,7 +59,7 @@ export default function RootLayout() {
               <Stack.Screen name="hop/join" options={{ animation: 'slide_from_bottom' }} />
             </Stack>
           </View>
-          <GlobalTabBar />
+          {showTabBar ? <GlobalTabBar /> : null}
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

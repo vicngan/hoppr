@@ -2,10 +2,21 @@ import { useState } from 'react';
 import { View, StyleSheet, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing, radius } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { useTogether } from '@/core/together';
 import type { Hop, HopStatus } from '@/core/together';
+
+/** Has an upcoming (not-yet-past) ticket worth surfacing on the hub. */
+function hasUpcomingTicket(hop: Hop | null): boolean {
+  if (!hop || hop.status !== 'planned') return false;
+  if (hop.planDate) {
+    const when = new Date(`${hop.planDate}T${hop.planTime ?? '23:59'}:00`);
+    return when.getTime() >= Date.now() - 24 * 60 * 60 * 1000; // grace window
+  }
+  return true; // slot-only planned hops (code-invite path) have no date to compare — assume upcoming
+}
 
 /** Route the resume button to the screen for the hop's current status. */
 type HopRoute = '/hop/lobby' | '/hop/answer' | '/hop/swipe' | '/hop/pick' | '/hop/plan';
@@ -59,17 +70,25 @@ export default function TogetherScreen() {
   };
 
   return (
-    <Screen>
-      <Kicker accent style={{ marginBottom: 9 }}>
-        Together
-      </Kicker>
+    <>
+      <AppHeader variant="root" title="Together" />
+      <Screen padTop={false}>
       <Text variant="display" size={30} style={{ marginBottom: 8 }}>
         Decide as a group.
       </Text>
-      <Text variant="serif" size={19} color={colors.ink80} style={{ marginBottom: spacing.xxl }}>
+      <Text variant="serif" size={19} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
         Invite friends, everyone answers a few questions privately, then swipe to
         a place that clears the whole table.
       </Text>
+
+      <PillButton
+        label="Plan with friends"
+        variant="outline"
+        style={{ marginBottom: spacing.lg }}
+        onPress={() => router.push('/together/plan/invite')}
+      />
+
+      {hasUpcomingTicket(hop) ? <TicketsEntryCard onPress={() => router.push('/together/tickets')} /> : null}
 
       <Card style={{ marginBottom: spacing.lg }}>
         <Kicker style={{ marginBottom: 10 }}>How a hop works</Kicker>
@@ -115,20 +134,38 @@ export default function TogetherScreen() {
         style={{ marginTop: spacing.sm }}
         onPress={() => router.push('/hop/join')}
       />
-    </Screen>
+      </Screen>
+    </>
+  );
+}
+
+function TicketsEntryCard({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.ticketsCard, pressed && { opacity: 0.9 }]}>
+      <View style={{ flex: 1 }}>
+        <Kicker style={{ marginBottom: 4 }}>Your tickets</Kicker>
+        <Text variant="body" size={13} color={colors.ink55}>
+          See what you&apos;ve got planned, past and upcoming.
+        </Text>
+      </View>
+      <Text variant="kicker" size={11} color={colors.accent}>
+        Open →
+      </Text>
+    </Pressable>
   );
 }
 
 function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
   const router = useRouter();
   return (
-    <Screen>
-      <Kicker accent style={{ marginBottom: 9 }}>
-        Your hop
-      </Kicker>
-      <Text variant="display" size={30} style={{ marginBottom: spacing.lg }}>
+    <>
+      <AppHeader variant="root" title="Together" />
+      <Screen padTop={false}>
+      <Text variant="display" size={30} style={{ marginBottom: spacing.md }}>
         {hop.title}
       </Text>
+
+      {hasUpcomingTicket(hop) ? <TicketsEntryCard onPress={() => router.push('/together/tickets')} /> : null}
 
       <Card accent style={{ marginBottom: spacing.lg }}>
         <View style={styles.avatarRow}>
@@ -163,11 +200,23 @@ function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
           Leave hop
         </Text>
       </Pressable>
-    </Screen>
+      </Screen>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  ticketsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    backgroundColor: colors.card,
+    marginBottom: spacing.lg,
+  },
   step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 7 },
   num: { width: 20, paddingTop: 3 },
   input: {

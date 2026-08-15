@@ -9,9 +9,12 @@
  *   pickTallies / winningSlot   read-model helpers for the reveal screens
  *   setHopSync           where the realtime backend registers itself
  */
+// Registers the realtime backend when Supabase is configured (no-op keyless).
+import './register-sync';
+
 export * from './types';
 export { useTogether, selectIsHost, selectYou, YOU_ID } from './store';
-export { BOTS, findBot } from './bots';
+export { BOTS, findBot, botMember } from './bots';
 export {
   hopQuestions,
   HOP_QUESTION_IDS,
@@ -22,6 +25,3 @@ export {
   winningSlot,
 } from './match';
 export { setHopSync, hopSync, isSimulated, noopSync, type HopSync } from './sync';
-
-// Registers the realtime backend when Supabase is configured (no-op keyless).
-import './register-sync';

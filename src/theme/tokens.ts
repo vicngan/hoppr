@@ -39,6 +39,13 @@ export const colors = {
   ink12: 'rgba(20,17,13,0.12)',
   ink10: 'rgba(20,17,13,0.1)',
   ink08: 'rgba(20,17,13,0.08)',
+
+  /** one-off "you are here" map pin blue */
+  mapPin: '#2a6df4',
+
+  /** profile-dot avatar gradient (header + tab bar) */
+  avatarGradientFrom: '#d9b48a',
+  avatarGradientTo: '#c8431c',
 } as const;
 
 /** the diagonal-stripe placeholder used everywhere a photo will go */
@@ -47,12 +54,26 @@ export const stripe = {
   dark: '#ded5c1',
 } as const;
 
+/**
+ * Universal "no photo" fallback gradient pairs, used by `PlaceImage` /
+ * `StripePlaceholder` wherever the design shows a placeholder photo. Cycle
+ * through these (e.g. by index) rather than hardcoding one pair everywhere.
+ */
+export const gradientPlaceholders = [
+  { from: '#e2c9a6', to: '#9c320f' },
+  { from: '#d9b48a', to: '#c8431c' },
+  { from: '#c9b79a', to: '#8a5a2b' },
+  { from: '#d9c4a0', to: '#6f4a24' },
+] as const;
+
 export const radius = {
   sm: 8,
   md: 12,
   lg: 14,
   xl: 16,
   xxl: 20,
+  /** bottom sheets — distinct from xxl (20) */
+  sheet: 28,
   pill: 100,
 } as const;
 

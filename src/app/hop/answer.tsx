@@ -26,7 +26,7 @@ export default function AnswerScreen() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (hydrated && !hop) router.replace('/(tabs)/together');
+    if (hydrated && !hop) router.replace('/together');
   }, [hydrated, hop, router]);
 
   if (!hydrated || !hop) return <Screen>{null}</Screen>;

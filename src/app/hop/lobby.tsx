@@ -18,7 +18,7 @@ export default function LobbyScreen() {
   const beginAnswers = useTogether((s) => s.beginAnswers);
 
   useEffect(() => {
-    if (hydrated && !hop) router.replace('/(tabs)/together');
+    if (hydrated && !hop) router.replace('/together');
   }, [hydrated, hop, router]);
 
   if (!hydrated || !hop) return <Screen>{null}</Screen>;
@@ -38,10 +38,10 @@ export default function LobbyScreen() {
         The table
       </Kicker>
       <Text variant="display" size={30} style={{ marginBottom: 8 }}>
-        Who's coming?
+        Who&apos;s coming?
       </Text>
       <Text variant="serif" size={18} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
-        You're in. Add a few friends — they'll answer on their own.
+        You&apos;re in. Add a few friends — they&apos;ll answer on their own.
       </Text>
 
       <Card style={styles.codeCard}>
@@ -68,7 +68,7 @@ export default function LobbyScreen() {
               {you.name} · host
             </Text>
             <Text variant="body" size={12} color={colors.ink55}>
-              That's you
+              That&apos;s you
             </Text>
           </View>
         </View>

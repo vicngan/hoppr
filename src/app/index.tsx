@@ -1,6 +1,11 @@
 import { Redirect } from 'expo-router';
+import { useOnboarding } from '@/core/onboarding/store';
 
-/** Root entry → open on the Ask (mascot) tab. */
+/** Root entry → onboarding until complete, then the Home tab. */
 export default function Index() {
-  return <Redirect href="/ask" />;
+  const hydrated = useOnboarding((s) => s.hydrated);
+  const hasOnboarded = useOnboarding((s) => s.hasOnboarded);
+
+  if (!hydrated) return null;
+  return <Redirect href={hasOnboarded ? '/home' : '/onboarding/ob-welcome'} />;
 }

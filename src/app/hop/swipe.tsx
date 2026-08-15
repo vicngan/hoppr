@@ -27,7 +27,7 @@ export default function SwipeScreen() {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (hydrated && !hop) router.replace('/(tabs)/together');
+    if (hydrated && !hop) router.replace('/together');
   }, [hydrated, hop, router]);
 
   // Empty deck (nothing to swipe) — go straight to the reveal.

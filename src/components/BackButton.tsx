@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/Text';
  */
 export function BackButton({ floating, style }: { floating?: boolean; style?: ViewStyle }) {
   const router = useRouter();
-  const onPress = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/discover'));
+  const onPress = () => (router.canGoBack() ? router.back() : router.replace('/explore'));
   return (
     <Pressable
       onPress={onPress}

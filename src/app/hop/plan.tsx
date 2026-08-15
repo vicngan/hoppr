@@ -23,7 +23,7 @@ export default function PlanScreen() {
   const pick = usePlace(hop?.pickId ?? undefined);
 
   useEffect(() => {
-    if (hydrated && !hop) router.replace('/(tabs)/together');
+    if (hydrated && !hop) router.replace('/together');
   }, [hydrated, hop, router]);
 
   if (!hydrated || !hop) return <Screen>{null}</Screen>;
@@ -50,7 +50,7 @@ export default function PlanScreen() {
 
   const startAnother = () => {
     leaveHop();
-    router.replace('/(tabs)/together');
+    router.replace('/together');
   };
 
   if (planned) {
@@ -60,7 +60,7 @@ export default function PlanScreen() {
           Locked in
         </Kicker>
         <Text variant="display" size={30} center style={{ marginBottom: spacing.lg }}>
-          It's a plan.
+          It&apos;s a plan.
         </Text>
 
         <Card accent padded={false} style={{ marginBottom: spacing.lg }}>
@@ -115,7 +115,7 @@ export default function PlanScreen() {
         When works?
       </Text>
       <Text variant="serif" size={18} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
-        Vote a time. The table's votes land as you go.
+        Vote a time. The table&apos;s votes land as you go.
       </Text>
 
       {pick ? (

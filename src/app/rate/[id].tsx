@@ -33,7 +33,7 @@ export default function RateScreen() {
     if (!place || stars === 0) return;
     rate(place, stars, picks, note.trim() || undefined);
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/discover');
+    else router.replace('/explore');
   };
 
   return (
