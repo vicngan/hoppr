@@ -42,6 +42,8 @@ export const colors = {
 
   /** one-off "you are here" map pin blue */
   mapPin: '#2a6df4',
+  /** "pick"/match affirmative green (swipe stack) */
+  success: '#3a8a5c',
 
   /** profile-dot avatar gradient (header + tab bar) */
   avatarGradientFrom: '#d9b48a',

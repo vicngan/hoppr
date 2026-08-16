@@ -23,6 +23,8 @@ generic dashboard or SaaS surface.
 | `accent` | `#c8431c` | rust accent |
 | `accentPressed` | `#9c320f` | pressed state |
 | `onDark` | `#f7f2e8` | text on ink/accent |
+| `mapPin` | `#2a6df4` | one-off "you are here" map pin |
+| `success` | `#3a8a5c` | affirmative state (e.g. Together swipe "PICK" stamp) |
 
 Muted text/borders use `ink08`–`ink80` alpha steps (see tokens.ts) rather
 than separate gray colors — stay on the ink alpha ramp instead of introducing

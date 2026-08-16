@@ -125,7 +125,7 @@ export function SwipeStack<T>({ items, keyOf, renderCard, onLike, onPass, emptyS
                       <View style={styles.card}>{renderCard(item)}</View>
                     </Pressable>
                     <Animated.View style={[styles.stamp, styles.likeStamp, likeStampStyle]}>
-                      <Text variant="bodyMedium" size={16} color="#3a8a5c">
+                      <Text variant="bodyMedium" size={16} color={colors.success}>
                         PICK
                       </Text>
                     </Animated.View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-  likeStamp: { right: 20, borderColor: '#3a8a5c', transform: [{ rotate: '-12deg' }] },
+  likeStamp: { right: 20, borderColor: colors.success, transform: [{ rotate: '-12deg' }] },
   passStamp: { left: 20, borderColor: colors.ink45, transform: [{ rotate: '12deg' }] },
   actions: {
     flexDirection: 'row',

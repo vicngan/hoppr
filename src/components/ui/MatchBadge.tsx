@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { colors, radius } from '@/theme/tokens';
+import { fonts } from '@/theme/fonts';
 import { Text } from './Text';
 
 /** The translucent "94%" match chip pinned to the corner of place photos. */
@@ -21,5 +22,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignSelf: 'flex-start',
   },
-  text: { fontFamily: 'JetBrainsMono_500Medium', color: colors.ink },
+  text: { fontFamily: fonts.monoMedium, color: colors.ink },
 });
