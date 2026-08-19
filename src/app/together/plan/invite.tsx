@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet, Pressable, TextInput } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceImage } from '@/components/PlaceImage';
 import { colors, spacing, radius } from '@/theme/tokens';
@@ -55,17 +55,16 @@ export default function PlanInviteScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
-        <Kicker accent style={{ marginBottom: 9 }}>
-          Step 1 of 8
-        </Kicker>
-        <Text variant="display" size={28} style={{ marginBottom: 8 }}>
-          Invite the table.
-        </Text>
+    <View style={styles.root}>
+      <AppHeader
+        variant="wizard"
+        onBack={() => router.back()}
+        stepLabel="Step 1 of 8"
+        heading="Invite the table."
+      />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <Text variant="serif" size={17} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
-          By email or phone, with a shareable code, or a few demo friends — everyone
+          By email or phone, with a shareable code, or a few Hoppr friends — everyone
           answers privately, then you swipe together.
         </Text>
 
@@ -136,35 +135,41 @@ export default function PlanInviteScreen() {
           </View>
         </Card>
 
-        <Kicker style={{ marginBottom: spacing.sm }}>Or add a demo friend</Kicker>
-        {BOTS.map((bot) => {
-          const on = invitedIds.has(bot.id);
-          return (
-            <Pressable
-              key={bot.id}
-              onPress={() => toggleBot(bot)}
-              style={({ pressed }) => [styles.row, on ? styles.rowOn : styles.rowOff, { opacity: pressed ? 0.9 : 1 }]}>
-              <View style={styles.avatar}>
-                <Text variant="body" size={18}>
-                  {bot.emoji}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="bodyMedium" size={15} color={on ? colors.onDark : colors.ink}>
+        <View style={styles.friendsHead}>
+          <Kicker>Or add a Hoppr friend</Kicker>
+          <Pressable hitSlop={8}>
+            <Kicker accent size={10} style={{ letterSpacing: 0.6 }}>
+              Search for more
+            </Kicker>
+          </Pressable>
+        </View>
+        <View style={styles.friendsGrid}>
+          {BOTS.map((bot) => {
+            const on = invitedIds.has(bot.id);
+            return (
+              <Pressable
+                key={bot.id}
+                onPress={() => toggleBot(bot)}
+                style={({ pressed }) => [styles.friendTile, { opacity: pressed ? 0.9 : 1 }]}>
+                <View style={[styles.friendPhoto, on ? styles.friendPhotoOn : styles.friendPhotoOff]}>
+                  <Text variant="body" size={26}>
+                    {bot.emoji}
+                  </Text>
+                  {on ? (
+                    <View style={styles.friendCheck}>
+                      <Text variant="kicker" size={9} color={colors.onDark}>
+                        IN
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text variant="bodyMedium" size={12} color={colors.ink} numberOfLines={1} style={{ marginTop: 6 }}>
                   {bot.name}
                 </Text>
-                <Text variant="body" size={12} color={on ? colors.onDark : colors.ink55}>
-                  {bot.blurb}
-                </Text>
-              </View>
-              <View style={[styles.toggle, on && styles.toggleOn]}>
-                <Text variant="kicker" size={9} color={on ? colors.accent : colors.ink45}>
-                  {on ? 'IN' : 'ADD'}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+              </Pressable>
+            );
+          })}
+        </View>
 
         <PillButton
           label={invitees.length < 1 ? 'Add at least one friend' : 'Continue'}
@@ -172,13 +177,14 @@ export default function PlanInviteScreen() {
           style={{ marginTop: spacing.lg, opacity: invitees.length < 1 ? 0.4 : 1 }}
           onPress={invitees.length < 1 ? undefined : () => router.push('/together/plan/quiz')}
         />
-      </View>
-    </Screen>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
+  root: { flex: 1, backgroundColor: colors.paper },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxxl },
   contactRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   contactInput: {
     flex: 1,
@@ -218,19 +224,31 @@ const styles = StyleSheet.create({
   },
   rowOff: { backgroundColor: colors.card, borderColor: colors.ink14 },
   rowOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.paper,
+  friendsHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  friendsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  friendTile: { width: '22%', alignItems: 'center' },
+  friendPhoto: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toggle: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  friendPhotoOff: { backgroundColor: colors.card, borderColor: colors.ink14 },
+  friendPhotoOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  friendCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
     borderRadius: radius.pill,
-    backgroundColor: colors.card,
+    backgroundColor: colors.ink,
   },
-  toggleOn: { backgroundColor: colors.card },
 });

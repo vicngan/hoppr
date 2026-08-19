@@ -25,6 +25,10 @@ export type AppHeaderProps = {
   right?: ReactNode;
   /** `sub`-only: swap the small icon-only mark for the full lockup wordmark (default 'mark'). Used by pushed "main" screens like place/[id] and menu/[id] that still need a back button. */
   logo?: 'mark' | 'lockup';
+  /** `wizard`-only: small step counter (e.g. "Step 1 of 8"), rendered below the back button/logo row. */
+  stepLabel?: string;
+  /** `wizard`-only: the step's title, rendered below `stepLabel`. */
+  heading?: string;
 };
 
 /**
@@ -60,23 +64,41 @@ export function AppHeader({
   onBellPress,
   right,
   logo = 'mark',
+  stepLabel,
+  heading,
 }: AppHeaderProps) {
   const router = useRouter();
   const isHomeChrome = variant === 'root' && (showProfileDot || showBell || streak != null);
 
   if (variant === 'wizard') {
     return (
-      <View style={[styles.root, styles.rootSub, styles.wizardRow]}>
-        <View style={styles.wizardSide}>
-          <Pressable
-            onPress={onBack}
-            hitSlop={8}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-            <ChevronBackIcon size={18} color={colors.ink} />
-          </Pressable>
+      <View style={[styles.root, styles.rootSub, styles.wizardRoot]}>
+        <View style={styles.wizardRow}>
+          <View style={styles.wizardSide}>
+            <Pressable
+              onPress={onBack}
+              hitSlop={8}
+              style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
+              <ChevronBackIcon size={18} color={colors.ink} />
+            </Pressable>
+          </View>
+          <Image source={MARK_LOGO} style={styles.markLogoCentered} resizeMode="contain" />
+          <View style={[styles.wizardSide, styles.wizardSideRight]}>{right}</View>
         </View>
-        <Image source={MARK_LOGO} style={styles.markLogoCentered} resizeMode="contain" />
-        <View style={[styles.wizardSide, styles.wizardSideRight]}>{right}</View>
+        {stepLabel || heading ? (
+          <View style={styles.wizardTextBlock}>
+            {stepLabel ? (
+              <Text variant="kicker" size={11} color={colors.accent} style={{ marginBottom: 6 }}>
+                {stepLabel}
+              </Text>
+            ) : null}
+            {heading ? (
+              <Text variant="display" size={26}>
+                {heading}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -179,10 +201,16 @@ const styles = StyleSheet.create({
   sticky: { position: 'sticky' as unknown as 'relative', top: 0, zIndex: 5 },
   rootSub: { paddingTop: 76 },
   rootRoot: { paddingTop: 68 },
-  wizardRow: { justifyContent: 'space-between', position: 'relative' },
+  // Explicit flexBasis override: the shared `root` style's `flex: 0` compiles
+  // on web to `flex-basis: 0%` (CSS shorthand semantics, unlike Yoga's
+  // `auto`), which collapses this column to its padding alone and lets the
+  // stacked step-label/heading block render outside its own box.
+  wizardRoot: { flexDirection: 'column', alignItems: 'stretch', flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
+  wizardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', position: 'relative' },
   wizardSide: { width: 34, alignItems: 'flex-start' },
   wizardSideRight: { alignItems: 'flex-end' },
-  markLogoCentered: { width: 26, height: 26, position: 'absolute', left: '50%', marginLeft: -13 },
+  markLogoCentered: { width: 40, height: 40, position: 'absolute', left: '50%', marginLeft: -20 },
+  wizardTextBlock: { marginTop: spacing.lg },
   left: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   backBtn: {
