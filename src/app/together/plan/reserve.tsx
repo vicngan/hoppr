@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { Screen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing } from '@/theme/tokens';
 import { usePlace } from '@/core/places-store';
@@ -42,7 +42,7 @@ export default function PlanReserveScreen() {
 
   return (
     <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="sub" title="Plan together" onBack={() => router.back()} />
+      <AppHeader variant="wizard" onBack={() => router.back()} />
       <View style={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 6 of 8
@@ -51,21 +51,27 @@ export default function PlanReserveScreen() {
           Ready to lock it in.
         </Text>
 
-        <Card accent style={{ marginBottom: spacing.lg }}>
-          <SummaryLine label="Place" value={place ? place.name : 'Somewhere good'} />
+        <View style={styles.summaryCard}>
+          <Text variant="bodyMedium" size={16} color={colors.onDark}>
+            {place ? place.name : 'Somewhere good'}
+          </Text>
           {place ? (
-            <Text variant="kicker" size={10} color={colors.ink45} style={{ marginBottom: 10 }}>
+            <Text variant="body" size={12} color="rgba(247,242,232,0.6)" style={{ marginTop: 2 }}>
               {[CATEGORY_LABEL[place.category], place.area].filter(Boolean).join(' · ')}
             </Text>
           ) : null}
-          <SummaryLine label="When" value={`${fmtDate(date)}${time ? ` · ${time}` : ''}`} />
-          <SummaryLine label="Party" value={`${partySize} ${partySize === 1 ? 'person' : 'people'}`} last />
-        </Card>
+          <View style={styles.statRow}>
+            <Stat label="Date" value={fmtDate(date)} />
+            <Stat label="Time" value={time ?? 'TBD'} />
+            <Stat label="Party" value={`${partySize} ${partySize === 1 ? 'guest' : 'guests'}`} />
+          </View>
+        </View>
 
         <PillButton
           label={reserving ? 'Reserving…' : 'Reserve the table'}
-          variant="solid"
-          style={{ opacity: reserving ? 0.6 : 1 }}
+          variant="outline"
+          selected
+          style={{ marginTop: spacing.lg, opacity: reserving ? 0.6 : 1 }}
           onPress={reserving ? undefined : reserve}
         />
         <Text variant="body" size={12} color={colors.ink45} center style={{ marginTop: spacing.sm }}>
@@ -76,13 +82,13 @@ export default function PlanReserveScreen() {
   );
 }
 
-function SummaryLine({ label, value, last }: { label: string; value: string; last?: boolean }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View style={[styles.line, !last && styles.lineDivider]}>
-      <Text variant="kicker" size={10} color={colors.accent} style={styles.label}>
-        {label}
+    <View>
+      <Text variant="kicker" size={9} color="rgba(247,242,232,0.5)">
+        {label.toUpperCase()}
       </Text>
-      <Text variant="bodyMedium" size={15} style={{ flex: 1 }}>
+      <Text variant="bodyMedium" size={13} color={colors.onDark} style={{ marginTop: 2 }}>
         {value}
       </Text>
     </View>
@@ -91,7 +97,18 @@ function SummaryLine({ label, value, last }: { label: string; value: string; las
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  lineDivider: { borderBottomWidth: 1, borderBottomColor: colors.ink10 },
-  label: { width: 52 },
+  summaryCard: {
+    backgroundColor: colors.ink,
+    borderRadius: 18,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: spacing.xl,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(247,242,232,0.15)',
+  },
 });

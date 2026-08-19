@@ -216,6 +216,38 @@ export function GemIcon({ size = DEFAULT_SIZE, color = DEFAULT_COLOR }: IconProp
   );
 }
 
+/** calendar icon (datetime picker). */
+export function CalendarIcon({ size = DEFAULT_SIZE, color = DEFAULT_COLOR }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 6.5h15v13h-15z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Path d="M4.5 10h15" stroke={color} strokeWidth={2} strokeLinejoin="round" />
+      <Line x1={8} y1={3.5} x2={8} y2={7.5} stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Line x1={16} y1={3.5} x2={16} y2={7.5} stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** right-pointing chevron (calendar month nav / list disclosure). */
+export function ChevronForwardIcon({ size = DEFAULT_SIZE, color = DEFAULT_COLOR }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9.5 5.5 16 12l-6.5 6.5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** streak-flag / pennant icon (header streak pill). */
 export function StreakFlagIcon({ size = DEFAULT_SIZE, color = DEFAULT_COLOR }: IconProps) {
   return (

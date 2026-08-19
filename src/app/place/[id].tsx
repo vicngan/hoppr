@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
+import { SavedIcon } from '@/theme/icons';
 import { colors, radius, spacing, gradientPlaceholders } from '@/theme/tokens';
 import { deriveSpecs, placeBadges, CATEGORY_LABEL } from '@/core/places';
 import { usePlace } from '@/core/places-store';
@@ -99,7 +100,11 @@ export default function PlaceScreen() {
 
   return (
     <View style={styles.root}>
-      <AppHeader variant="sub" onBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))} />
+      <AppHeader
+        variant="sub"
+        logo="lockup"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
+      />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: spacing.xxxl + 80 }}
@@ -284,9 +289,7 @@ export default function PlaceScreen() {
           onPress={() => toggleSave(place)}
           hitSlop={8}
           style={[styles.bookmarkBtn, saved && styles.bookmarkBtnOn]}>
-          <Text variant="bodyMedium" size={18} color={saved ? colors.onDark : colors.ink}>
-            {saved ? '★' : '☆'}
-          </Text>
+          <SavedIcon size={19} color={saved ? colors.onDark : colors.accent} filled={saved} />
         </Pressable>
         <Pressable onPress={onReserve} style={styles.reserveBtn}>
           <Text variant="bodyMedium" size={14} color={colors.onDark}>
@@ -315,7 +318,7 @@ const styles = StyleSheet.create({
   hero: { height: 220, width: '100%', justifyContent: 'flex-end', padding: spacing.xl },
   eventBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(20,17,13,0.55)',
+    backgroundColor: colors.accent,
     borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -395,7 +398,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: radius.pill,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },

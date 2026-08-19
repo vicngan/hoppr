@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { View, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
+import { BrandMark } from '@/components/BrandMark';
 import { colors, spacing, radius } from '@/theme/tokens';
-import { fonts } from '@/theme/fonts';
 import { useTogether } from '@/core/together';
 import type { Hop, HopStatus } from '@/core/together';
 
@@ -19,20 +18,25 @@ function hasUpcomingTicket(hop: Hop | null): boolean {
 }
 
 /** Route the resume button to the screen for the hop's current status. */
-type HopRoute = '/hop/lobby' | '/hop/answer' | '/hop/swipe' | '/hop/pick' | '/hop/plan';
+type HopRoute =
+  | '/together/plan/invite'
+  | '/together/plan/quiz'
+  | '/together/plan/matches'
+  | '/together/plan/datetime'
+  | '/together/plan/ticket';
 
 export function statusRoute(status: HopStatus): HopRoute {
   switch (status) {
     case 'lobby':
-      return '/hop/lobby';
+      return '/together/plan/invite';
     case 'answering':
-      return '/hop/answer';
+      return '/together/plan/quiz';
     case 'swiping':
-      return '/hop/swipe';
+      return '/together/plan/matches';
     case 'picked':
-      return '/hop/pick';
+      return '/together/plan/datetime';
     case 'planned':
-      return '/hop/plan';
+      return '/together/plan/ticket';
   }
 }
 
@@ -52,30 +56,25 @@ export default function TogetherScreen() {
   const router = useRouter();
   const hydrated = useTogether((s) => s.hydrated);
   const hop = useTogether((s) => s.hop);
-  const startHop = useTogether((s) => s.startHop);
   const leaveHop = useTogether((s) => s.leaveHop);
-
-  const [naming, setNaming] = useState(false);
-  const [title, setTitle] = useState('');
 
   if (!hydrated) return <Screen>{null}</Screen>;
 
   if (hop) return <ResumeHub hop={hop} onLeave={leaveHop} />;
 
-  const start = () => {
-    startHop(title);
-    setTitle('');
-    setNaming(false);
-    router.push('/hop/lobby');
-  };
-
   return (
     <>
-      <AppHeader variant="root" title="Together" />
-      <Screen padTop={false}>
-      <Text variant="display" size={30} style={{ marginBottom: 8 }}>
-        Decide as a group.
-      </Text>
+      <AppHeader variant="root" />
+      <View style={styles.titleBlock}>
+        <View style={styles.titleRow}>
+          <BrandMark size={22} style={styles.titleMark} />
+          <Text variant="display" size={30}>
+            Decide as a group.
+          </Text>
+        </View>
+      </View>
+      <Screen padTop={false} contentStyle={styles.introContent}>
+      <View style={styles.introCenter}>
       <Text variant="serif" size={19} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
         Invite friends, everyone answers a few questions privately, then swipe to
         a place that clears the whole table.
@@ -109,31 +108,12 @@ export default function TogetherScreen() {
         ))}
       </Card>
 
-      {naming ? (
-        <Card style={{ marginBottom: spacing.md }}>
-          <Kicker style={{ marginBottom: 8 }}>Name this hop</Kicker>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Friday, somewhere good"
-            placeholderTextColor={colors.ink40}
-            style={styles.input}
-            autoFocus
-            returnKeyType="go"
-            onSubmitEditing={start}
-          />
-          <PillButton label="Create hop" variant="solid" style={{ marginTop: spacing.md }} onPress={start} />
-        </Card>
-      ) : (
-        <PillButton label="Start a hop" variant="solid" onPress={() => setNaming(true)} />
-      )}
-
       <PillButton
         label="Join a hop"
         variant="outline"
-        style={{ marginTop: spacing.sm }}
-        onPress={() => router.push('/hop/join')}
+        onPress={() => router.push('/together/plan/join')}
       />
+      </View>
       </Screen>
     </>
   );
@@ -159,11 +139,16 @@ function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
   const router = useRouter();
   return (
     <>
-      <AppHeader variant="root" title="Together" />
+      <AppHeader variant="root" />
+      <View style={styles.titleBlock}>
+        <View style={styles.titleRow}>
+          <BrandMark size={22} style={styles.titleMark} />
+          <Text variant="display" size={30}>
+            {hop.title}
+          </Text>
+        </View>
+      </View>
       <Screen padTop={false}>
-      <Text variant="display" size={30} style={{ marginBottom: spacing.md }}>
-        {hop.title}
-      </Text>
 
       {hasUpcomingTicket(hop) ? <TicketsEntryCard onPress={() => router.push('/together/tickets')} /> : null}
 
@@ -206,6 +191,11 @@ function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  introContent: { flexGrow: 1 },
+  introCenter: { flex: 1, justifyContent: 'center' },
+  titleBlock: { paddingHorizontal: spacing.xl, paddingBottom: 12, backgroundColor: colors.paper },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  titleMark: { marginRight: 8 },
   ticketsCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -219,14 +209,6 @@ const styles = StyleSheet.create({
   },
   step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 7 },
   num: { width: 20, paddingTop: 3 },
-  input: {
-    fontFamily: fonts.sans,
-    fontSize: 16,
-    color: colors.ink,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.ink16,
-    paddingVertical: 8,
-  },
   avatarRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.sm },
   avatar: {
     width: 40,

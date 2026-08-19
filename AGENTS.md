@@ -54,7 +54,8 @@ bots) — the whole app must run with zero secrets configured.
 
 ### Places
 
-Google Places is the external venue source, accessed only through
+Google Places is the external venue sour
+ce, accessed only through
 `src/core/places-repo.ts` (provider) + `src/core/places-store.ts` (cache),
 never called directly from UI. `fetchNearby` hits `hoppr-places` when
 Supabase is configured, else falls back to seed data.

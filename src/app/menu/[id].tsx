@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator, Modal } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
-import { BackButton } from '@/components/BackButton';
+import { AppHeader } from '@/components/AppHeader';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { usePlace } from '@/core/places-store';
@@ -11,6 +11,7 @@ import { useTaste } from '@/core/taste/store';
 import { useMenu, useMenuStore } from '@/core/menu/store';
 import { recommendDish } from '@/core/menu/recommend';
 import { DIETARY_LABEL, type Dietary, type MenuItem } from '@/core/menu/types';
+import { groupBySection } from '@/core/menu/util';
 import { aiAvailable, aiExtractMenu } from '@/core/ai/client';
 
 const DIETS: Dietary[] = ['veg', 'vegan', 'gf'];
@@ -46,11 +47,11 @@ function MenuEntrySheet({
         <Text variant="display" size={22} style={{ marginBottom: 18 }}>
           Order this
         </Text>
-        <Pressable style={sheetStyles.option} onPress={onPhoto}>
-          <Text variant="bodyMedium" size={15}>
+        <Pressable style={[sheetStyles.option, sheetStyles.optionPrimary]} onPress={onPhoto}>
+          <Text variant="bodyMedium" size={15} color={colors.onDark}>
             📷  Snap the menu
           </Text>
-          <Text variant="body" size={12} color={colors.ink50} style={{ marginTop: 3 }}>
+          <Text variant="body" size={12} color="rgba(247,242,232,0.75)" style={{ marginTop: 3 }}>
             Hoppr reads the photo and points at what fits you
           </Text>
         </Pressable>
@@ -98,6 +99,13 @@ const sheetStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.ink08,
   },
+  optionPrimary: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.lg,
+    borderBottomWidth: 0,
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
 });
 
 /**
@@ -105,7 +113,9 @@ const sheetStyles = StyleSheet.create({
  * the full menu, dietary toggles, and the photo→extract / manual add flow.
  */
 export default function MenuScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const onBack = () => (router.canGoBack() ? router.back() : router.replace('/explore'));
   const place = usePlace(id);
   const profile = useTaste((s) => s.profile);
   const items = useMenu(id ?? '');
@@ -132,12 +142,14 @@ export default function MenuScreen() {
 
   if (!place) {
     return (
-      <Screen contentStyle={{ paddingTop: 60 }}>
-        <BackButton style={{ marginBottom: 18 }} />
-        <Text variant="serif" size={20}>
-          That place wandered off.
-        </Text>
-      </Screen>
+      <>
+        <AppHeader variant="sub" logo="lockup" onBack={onBack} />
+        <Screen padTop={false}>
+          <Text variant="serif" size={20}>
+            That place wandered off.
+          </Text>
+        </Screen>
+      </>
     );
   }
 
@@ -219,7 +231,9 @@ export default function MenuScreen() {
   }
 
   return (
-    <Screen contentStyle={{ paddingTop: 60 }}>
+    <>
+      <AppHeader variant="sub" logo="lockup" onBack={onBack} />
+      <Screen padTop={false}>
       <MenuEntrySheet
         visible={showEntry}
         onClose={() => setShowEntry(false)}
@@ -233,7 +247,6 @@ export default function MenuScreen() {
           setShowManual(true);
         }}
       />
-      <BackButton style={{ marginBottom: 18 }} />
       <Kicker style={{ marginBottom: 10 }}>{place.name} · menu</Kicker>
       <Text variant="display" size={28} style={{ marginBottom: 18 }}>
         What should you get?
@@ -380,18 +393,9 @@ export default function MenuScreen() {
           ))}
         </View>
       )}
-    </Screen>
+      </Screen>
+    </>
   );
-}
-
-function groupBySection(items: MenuItem[]): [string, MenuItem[]][] {
-  const map = new Map<string, MenuItem[]>();
-  for (const it of items) {
-    const key = it.section ?? '';
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(it);
-  }
-  return [...map.entries()];
 }
 
 type DishPickLike = ReturnType<typeof recommendDish>;
@@ -415,7 +419,11 @@ function MenuPhotoMock({
 }) {
   return (
     <Screen contentStyle={{ paddingTop: 60 }}>
-      <BackButton style={{ marginBottom: 18 }} />
+      <Pressable onPress={onClose} hitSlop={10} style={{ alignSelf: 'flex-start', marginBottom: 18 }}>
+        <Text variant="body" size={18} color={colors.ink}>
+          ←
+        </Text>
+      </Pressable>
       <Kicker style={{ marginBottom: 10 }}>{placeName} · scanned menu</Kicker>
       <Text variant="display" size={26} style={{ marginBottom: 8 }}>
         Got it — here&apos;s what stood out

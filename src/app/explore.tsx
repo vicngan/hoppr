@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AppHeader } from '@/components/AppHeader';
+import { BrandMark } from '@/components/BrandMark';
 import { Text, Kicker } from '@/components/ui';
 import { PlaceCard } from '@/components/PlaceCard';
 import { CategoryPills } from '@/components/explore/CategoryPills';
@@ -78,21 +79,23 @@ export default function ExploreScreen() {
   return (
     <View style={styles.root}>
       <AppHeader variant="root" />
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: spacing.xxxl }}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.headBlock}>
+      <View style={[styles.headBlock, styles.headBlockFixed]}>
+        <View style={styles.titleRow}>
+          <BrandMark size={22} style={styles.titleMark} />
           <Text variant="display" size={30}>
             Explore
           </Text>
-          <Pressable onPress={() => setMode('map')} style={styles.mapBtn}>
-            <ExploreIcon size={15} color={colors.accent} />
-            <Text variant="bodyMedium" size={12} color={colors.accent}>
-              Map
-            </Text>
-          </Pressable>
         </View>
-
+        <Pressable onPress={() => setMode('map')} style={styles.mapBtn}>
+          <ExploreIcon size={15} color={colors.accent} />
+          <Text variant="bodyMedium" size={12} color={colors.accent}>
+            Map
+          </Text>
+        </Pressable>
+      </View>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: spacing.xxxl }}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.searchWrap}>
           <TextInput
             value={query}
@@ -173,6 +176,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: 16,
   },
+  headBlockFixed: { backgroundColor: colors.paper },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  titleMark: { marginRight: 8 },
   mapBtn: {
     flexDirection: 'row',
     alignItems: 'center',

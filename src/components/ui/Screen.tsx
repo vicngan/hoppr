@@ -23,7 +23,7 @@ export function Screen({ children, scroll = true, gutter = spacing.xl, contentSt
   const insets = useSafeAreaInsets();
   const pad: ViewStyle = {
     paddingHorizontal: gutter,
-    paddingTop: padTop ? insets.top + spacing.xl : 0,
+    paddingTop: padTop ? insets.top + spacing.xl + 4 : 0,
     paddingBottom: spacing.xxxl,
   };
 

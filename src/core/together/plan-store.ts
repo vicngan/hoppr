@@ -2,26 +2,24 @@ import { create } from 'zustand';
 
 import type { Coords } from '../engine/types';
 import type { Place } from '../places';
-import type { Tag } from '../taste/tags';
 import { useTogether } from './store';
 import { TIME_SLOTS } from './match';
-import type { PlanPreorderDetails, PlanReserveDetails } from './types';
+import type { HopFoodAnswers, PlanPreorderDetails, PlanReserveDetails } from './types';
 
 /**
- * Wizard-local state for the Plan-Together flow (`src/app/together/plan/*.tsx`,
- * see `docs/redesign/SPEC.md` §4 and `SCREEN_MAP.md`). Deliberately separate
- * from `together/store.ts` — this is scratch state for the 8-step wizard;
- * it commits into a real `Hop` (via that store) only once the wizard
- * finishes, through `commitToHop()` below.
+ * Wizard-local state for the merged Plan-Together / Join-a-hop flow
+ * (`src/app/together/plan/*.tsx`). Deliberately separate from
+ * `together/store.ts` — this is scratch state for the wizard; it commits
+ * into a real `Hop` (via that store) only once the wizard finishes, through
+ * `commitToHop()` below.
  *
- * Not persisted: if the app is killed mid-wizard the flow restarts, same as
- * the design's source (no resume-mid-wizard behavior specified).
+ * Not persisted: if the app is killed mid-wizard the flow restarts.
  *
- * Entry contract (frozen, SPEC.md §4): `?fromPlace=<id>` param prefills
- * `fromPlace` and skips the quiz+matches steps (`plan-quiz`, `plan-matches`);
- * no param means a blank path from Explore that includes them — `matches.tsx`
- * sets `fromPlace` itself once a place is chosen via real `match.ts` scoring,
- * so by the time `commitToHop()` runs, `fromPlace` is always set.
+ * `fromPlace` (set via Detail's "Plan with friends" CTA, `?fromPlace=<id>`)
+ * is a *boost* signal now, not a skip: it guarantees that place is seeded
+ * into the swipe candidate pool `matches.tsx` builds, but every entry
+ * (blank or prefilled) always goes through the same invite → 6 questions →
+ * swipe → datetime → results steps.
  */
 
 export type PlanInvitee = {
@@ -37,24 +35,27 @@ export type PlanInvitee = {
 export type { PlanReserveDetails, PlanPreorderDetails };
 
 export type PlanState = {
-  /** place id prefilled from Detail's "Plan with friends" CTA, if entered that way */
+  /** place id boosted into the swipe candidate pool, if entered from Detail's "Plan with friends" CTA */
   fromPlace: string | null;
   invitees: PlanInvitee[];
+  /** shareable demo code shown on the invite screen (cosmetic — no live backend to join into) */
+  code: string;
+  /** the host's own 6 food-question picks */
+  hopAnswers: HopFoodAnswers | null;
+  /** the shared swipe candidate pool (4-6 place ids), fixed once matches.tsx builds it */
+  candidateIds: string[];
+  /** the host's own placeId → liked swipes, filled in on matches.tsx */
+  swipes: Record<string, boolean>;
   /** ISO date string, e.g. '2026-08-20' */
   date: string | null;
   /** e.g. '19:30' */
   time: string | null;
   reserve: PlanReserveDetails | null;
   preorder: PlanPreorderDetails | null;
-  /**
-   * Additive, non-frozen: tag nudges from `quiz.tsx`'s 3 quick-pick questions
-   * (blank path only). Not part of SPEC.md §4's frozen contract — feeds
-   * `matches.tsx`'s real `match.ts` scoring so the quiz isn't cosmetic, but
-   * nothing downstream depends on it being present.
-   */
-  quizTags: Tag[];
-  setQuizTags: (tags: Tag[]) => void;
 
+  setHopAnswers: (answers: HopFoodAnswers) => void;
+  setCandidateIds: (ids: string[]) => void;
+  setSwipe: (placeId: string, liked: boolean) => void;
   setFromPlace: (placeId: string | null) => void;
   addInvitee: (invitee: PlanInvitee) => void;
   removeInvitee: (id: string) => void;
@@ -72,15 +73,15 @@ export type PlanState = {
    *
    * Order, all via `useTogether`'s public actions:
    *   1. `startHop()` if there's no active hop yet.
-   *   2. `invite(botId)` for every bot invitee.
+   *   2. `invite(botId)` for every bot invitee (contact/code invitees are
+   *      seeded as lightweight bots too — see `invite.tsx`).
    *   3. `beginAnswers()` — lobby → answering.
-   *   4. `finishAnswering(places, coords)` — answering → swiping. `places` is
-   *      narrowed to just the chosen place (`fromPlace`) so the real
-   *      `groupShortlist`/`botSwipe` machinery in `match.ts` runs over a
-   *      candidate pool of one — deterministic, not fabricated, and it means
-   *      the eventual `groupPick` can only land on that place.
-   *   5. `swipe(fromPlace, true)` (your vote) then `finishSwiping(places)` —
-   *      swiping → picked, via the real tally in `pickTallies`.
+   *   4. `finishAnswering(places, coords)` — answering → swiping, over the
+   *      real `candidateIds` pool (4-6 places, boosted by `fromPlace` when
+   *      present — see `matches.tsx`), not narrowed to one.
+   *   5. Replays the host's real per-place swipes (`swipes`) via `swipe()`,
+   *      then `finishSwiping(places)` — swiping → picked, via the real tally
+   *      in `pickTallies`.
    *   6. `voteSlot(...)` + `lockSlot()` — picked → planned. The store only
    *      exposes `TIME_SLOTS`-based voting for this transition, so the wizard
    *      casts a real vote for the first slot to reach `planned` honestly;
@@ -92,20 +93,30 @@ export type PlanState = {
   commitToHop: (places: Place[], userCoords: Coords | null) => void;
 };
 
+const randCode = () => {
+  const s = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return `HOP-${(s + '000').slice(0, 3)}`;
+};
+
 const initial = {
   fromPlace: null,
   invitees: [],
+  code: randCode(),
+  hopAnswers: null,
+  candidateIds: [],
+  swipes: {},
   date: null,
   time: null,
   reserve: null,
   preorder: null,
-  quizTags: [],
 } satisfies Partial<PlanState>;
 
 export const usePlanStore = create<PlanState>()((set, get) => ({
   ...initial,
 
-  setQuizTags: (tags) => set({ quizTags: tags }),
+  setHopAnswers: (answers) => set({ hopAnswers: answers }),
+  setCandidateIds: (ids) => set({ candidateIds: ids }),
+  setSwipe: (placeId, liked) => set((s) => ({ swipes: { ...s.swipes, [placeId]: liked } })),
   setFromPlace: (placeId) => set({ fromPlace: placeId }),
   addInvitee: (invitee) =>
     set((s) => (s.invitees.some((i) => i.id === invitee.id) ? s : { invitees: [...s.invitees, invitee] })),
@@ -113,7 +124,7 @@ export const usePlanStore = create<PlanState>()((set, get) => ({
   setDateTime: (date, time) => set({ date, time }),
   setReserve: (reserve) => set({ reserve }),
   setPreorder: (preorder) => set({ preorder }),
-  reset: () => set(initial),
+  reset: () => set({ ...initial, code: randCode() }),
 
   commitToHop: (allPlaces, userCoords) => {
     const s = get();
@@ -126,25 +137,31 @@ export const usePlanStore = create<PlanState>()((set, get) => ({
 
     for (const inv of s.invitees) {
       if (inv.source === 'bot') together.invite(inv.id);
+      else together.inviteContact(inv.id, inv.name);
     }
 
     if (useTogether.getState().hop?.status === 'lobby') {
       together.beginAnswers();
     }
 
-    // Narrow the candidate pool to the already-chosen place (fromPlace is
-    // always set by this point — either the Detail CTA's param or matches.tsx's
-    // real match.ts-scored selection) so the real shortlist/swipe/pick
-    // machinery below can only land on it.
-    const chosen = s.fromPlace ? allPlaces.filter((p) => p.id === s.fromPlace) : allPlaces;
+    // The real swipe candidate pool matches.tsx already built (4-6 places,
+    // boosted by fromPlace) — not narrowed to one, so finishAnswering's
+    // internal groupShortlist just re-confirms this exact set.
+    const candidates = s.candidateIds.length
+      ? allPlaces.filter((p) => s.candidateIds.includes(p.id))
+      : s.fromPlace
+        ? allPlaces.filter((p) => p.id === s.fromPlace)
+        : allPlaces;
 
     if (useTogether.getState().hop?.status === 'answering') {
-      together.finishAnswering(chosen, userCoords);
+      together.finishAnswering(candidates, userCoords);
     }
 
-    if (useTogether.getState().hop?.status === 'swiping' && s.fromPlace) {
-      together.swipe(s.fromPlace, true);
-      together.finishSwiping(chosen);
+    if (useTogether.getState().hop?.status === 'swiping') {
+      for (const [placeId, liked] of Object.entries(s.swipes)) {
+        together.swipe(placeId, liked);
+      }
+      together.finishSwiping(candidates);
     }
 
     if (useTogether.getState().hop?.status === 'picked') {

@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   header: { paddingTop: spacing.lg },
   headline: { marginBottom: spacing.xs },
   sub: { marginBottom: 0 },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  body: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: spacing.xl },
   card: { width: '100%' },
   photoMock: {
     height: 160,

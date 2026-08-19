@@ -17,10 +17,12 @@ type Props<T> = {
   items: T[];
   keyOf: (item: T) => string;
   renderCard: (item: T) => ReactNode;
-  /** swiped right, tapped the heart button, or tapped the top card */
+  /** swiped right or tapped the heart button */
   onLike: (item: T) => void;
   /** swiped left or tapped the X button — just skip to the next candidate */
   onPass?: (item: T) => void;
+  /** tapped the card body — opens a detail view without advancing the deck. Falls back to `onLike` if omitted. */
+  onCardPress?: (item: T) => void;
   emptyState: ReactNode;
   height?: number;
 };
@@ -36,7 +38,16 @@ const STACK_SIZE = 4;
  * candidates fits a group deciding together. Not modal — renders inline as
  * a fixed-height block wherever it's placed.
  */
-export function SwipeStack<T>({ items, keyOf, renderCard, onLike, onPass, emptyState, height = 420 }: Props<T>) {
+export function SwipeStack<T>({
+  items,
+  keyOf,
+  renderCard,
+  onLike,
+  onPass,
+  onCardPress,
+  emptyState,
+  height = 420,
+}: Props<T>) {
   const [index, setIndex] = useState(0);
   const stack = items.slice(index, index + STACK_SIZE);
   const current = stack[0];
@@ -121,7 +132,7 @@ export function SwipeStack<T>({ items, keyOf, renderCard, onLike, onPass, emptyS
               return (
                 <GestureDetector key={key} gesture={pan}>
                   <Animated.View style={[styles.cardWrap, staticStyle, topCardStyle]}>
-                    <Pressable onPress={() => onLike(item)} style={styles.cardPress}>
+                    <Pressable onPress={() => (onCardPress ?? onLike)(item)} style={styles.cardPress}>
                       <View style={styles.card}>{renderCard(item)}</View>
                     </Pressable>
                     <Animated.View style={[styles.stamp, styles.likeStamp, likeStampStyle]}>

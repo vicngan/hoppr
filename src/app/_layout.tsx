@@ -51,12 +51,6 @@ export default function RootLayout() {
               <Stack.Screen name="category/[id]" />
               <Stack.Screen name="menu/[id]" />
               <Stack.Screen name="rate/[id]" options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="hop/lobby" />
-              <Stack.Screen name="hop/answer" />
-              <Stack.Screen name="hop/swipe" />
-              <Stack.Screen name="hop/pick" />
-              <Stack.Screen name="hop/plan" />
-              <Stack.Screen name="hop/join" options={{ animation: 'slide_from_bottom' }} />
             </Stack>
           </View>
           {showTabBar ? <GlobalTabBar /> : null}

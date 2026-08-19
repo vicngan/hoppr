@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { Screen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
-import { colors, spacing, radius } from '@/theme/tokens';
+import { colors, spacing, radius, shadow } from '@/theme/tokens';
 import { usePlace } from '@/core/places-store';
 import { CATEGORY_LABEL } from '@/core/places';
 import { useTogether } from '@/core/together';
@@ -44,7 +44,7 @@ export default function PlanTicketScreen() {
 
   return (
     <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="sub" title="Plan together" onBack={() => router.back()} />
+      <AppHeader variant="wizard" onBack={() => router.back()} />
       <View style={styles.body}>
         <Kicker accent center style={{ marginBottom: 10 }}>
           Step 8 of 8 — locked in
@@ -53,29 +53,24 @@ export default function PlanTicketScreen() {
           You&apos;re all set.
         </Text>
 
-        <Card accent padded={false} style={styles.pass}>
+        <View style={styles.pass}>
           <View style={styles.passTop}>
-            <Kicker style={{ marginBottom: 4 }}>{hop?.title ?? 'Your hop'}</Kicker>
-            <Text variant="serif" size={24}>
+            <Kicker accent style={{ marginBottom: 4 }}>
+              {fmtDate(date)}
+              {time ? ` · ${time}` : ''}
+            </Kicker>
+            <Text variant="serif" size={26} color={colors.onDark}>
               {place ? place.name : 'Somewhere good'}
             </Text>
             {place ? (
-              <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 2 }}>
+              <Text variant="body" size={13} color="rgba(247,242,232,0.6)" style={{ marginTop: 3 }}>
                 {[CATEGORY_LABEL[place.category], place.area].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
-          </View>
-
-          <View style={styles.perforation} />
-
-          <View style={styles.passBottom}>
-            <PassLine label="Date" value={fmtDate(date)} />
-            <PassLine label="Time" value={time ?? 'TBD'} />
-            <PassLine label="Guests" value={`${partySize} ${partySize === 1 ? 'person' : 'people'}`} last />
 
             <View style={styles.avatarStack}>
               {(hop?.members ?? []).map((m, i) => (
-                <View key={m.id} style={[styles.avatar, i > 0 && { marginLeft: -10 }]}>
+                <View key={m.id} style={[styles.avatar, i > 0 && { marginLeft: -11 }]}>
                   <Text variant="body" size={16}>
                     {m.emoji}
                   </Text>
@@ -83,7 +78,25 @@ export default function PlanTicketScreen() {
               ))}
             </View>
           </View>
-        </Card>
+
+          <View style={styles.perforationRow}>
+            <View style={styles.notchLeft} />
+            <View style={styles.perforation} />
+            <View style={styles.notchRight} />
+          </View>
+
+          <View style={styles.passBottom}>
+            <View>
+              <Text variant="kicker" size={9} color="rgba(247,242,232,0.5)">
+                TOGETHER WITH
+              </Text>
+              <Text variant="bodyMedium" size={14} color={colors.onDark} style={{ marginTop: 2 }}>
+                {(hop?.members ?? []).map((m) => m.name).join(', ') || `${partySize} guests`}
+              </Text>
+            </View>
+            <Barcode />
+          </View>
+        </View>
 
         <PillButton label="Done" variant="solid" style={{ marginTop: spacing.xxl }} onPress={done} />
       </View>
@@ -91,33 +104,37 @@ export default function PlanTicketScreen() {
   );
 }
 
-function PassLine({ label, value, last }: { label: string; value: string; last?: boolean }) {
+/** Simple alternating-bar barcode graphic — no real scan payload, purely the ticket-stub visual cue. */
+function Barcode() {
+  const widths = [3, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2];
   return (
-    <View style={[styles.line, !last && styles.lineDivider]}>
-      <Text variant="kicker" size={10} color={colors.accent} style={styles.label}>
-        {label}
-      </Text>
-      <Text variant="bodyMedium" size={15}>
-        {value}
-      </Text>
+    <View style={styles.barcode}>
+      {widths.map((w, i) => (
+        <View key={i} style={{ width: w, height: '100%', backgroundColor: colors.ink, marginRight: 2 }} />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
-  pass: { marginTop: spacing.md },
-  passTop: { padding: 18 },
-  passBottom: { padding: 18 },
+  pass: { marginTop: spacing.md, backgroundColor: colors.ink, borderRadius: radius.sheet, overflow: 'hidden', ...shadow.card },
+  passTop: { padding: 20 },
+  passBottom: {
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  perforationRow: { flexDirection: 'row', alignItems: 'center' },
   perforation: {
+    flex: 1,
     borderTopWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: colors.ink16,
-    marginHorizontal: 18,
+    borderColor: 'rgba(247,242,232,0.2)',
   },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
-  lineDivider: { borderBottomWidth: 1, borderBottomColor: colors.ink10 },
-  label: { width: 52 },
+  notchLeft: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.paper, marginLeft: -10 },
+  notchRight: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.paper, marginRight: -10 },
   avatarStack: { flexDirection: 'row', marginTop: spacing.md },
   avatar: {
     width: 32,
@@ -125,8 +142,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.fill,
     borderWidth: 1.5,
-    borderColor: colors.card,
+    borderColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  barcode: { flexDirection: 'row', width: 56, height: 56, backgroundColor: colors.onDark, padding: 5, borderRadius: 8 },
 });

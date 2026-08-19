@@ -53,12 +53,12 @@ export default function ObDietaryScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Pressable onPress={next} hitSlop={8}>
+        <PillButton label="Continue" variant="solid" onPress={next} />
+        <Pressable onPress={next} hitSlop={8} style={styles.skip}>
           <Text variant="bodyMedium" size={14} color={colors.ink45}>
             Skip
           </Text>
         </Pressable>
-        <PillButton label="Continue" variant="solid" onPress={next} style={styles.footerCta} />
       </View>
     </Screen>
   );
@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
   headline: { marginBottom: spacing.sm },
   sub: { marginBottom: spacing.xl },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  footerCta: { flex: 1 },
+  footer: { alignItems: 'center', gap: spacing.md },
+  skip: { paddingVertical: 4 },
 });

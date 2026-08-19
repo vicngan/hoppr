@@ -3,14 +3,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useTaste } from '../taste/store';
-import { applyDeltas, emptyProfile, type TasteProfile } from '../taste/profile';
+import { applyDeltas, applyWeightDeltas, emptyProfile, type TasteProfile } from '../taste/profile';
 import type { Coords } from '../engine/types';
 import type { Place } from '../places';
 import type { Question, QOption } from '../questions';
 import { BOTS, botMember, findBot } from './bots';
-import { groupShortlist, botSwipe, groupPick, botSlotVote, winningSlot, TIME_SLOTS } from './match';
+import { groupShortlist, foodAnswerDeltas, botSwipe, groupPick, botSlotVote, winningSlot, TIME_SLOTS } from './match';
 import { hopSync, isSimulated } from './sync';
-import type { Hop, HopMember } from './types';
+import type { Hop, HopFoodAnswers, HopMember } from './types';
 
 const YOU = 'you';
 
@@ -49,11 +49,19 @@ type TogetherState = {
 
   /** Lobby: add / remove a simulated friend. */
   invite: (botId: string) => void;
+  /**
+   * Lobby: add an email/phone/code invitee. No live backend to answer for
+   * them yet, so they're seeded a bot personality (round-robin over `BOTS`)
+   * the same way `invite` does, but keep their real name/id.
+   */
+  inviteContact: (id: string, name: string) => void;
   uninvite: (botId: string) => void;
   /** Lobby → private answers. */
   beginAnswers: () => void;
   /** Record one of *your* private answers (refines your hop-local taste only). */
   answerAsYou: (q: Question, o: QOption) => void;
+  /** Record a member's 6 unified food-question picks (host or a real joiner). */
+  answerFoodQuestions: (memberId: string, answers: HopFoodAnswers) => void;
   /** Finish your answers; when the table is done, build the swipe deck. */
   finishAnswering: (places: Place[], userCoords: Coords | null) => void;
 
@@ -156,6 +164,15 @@ export const useTogether = create<TogetherState>()(
           push({ ...hop, members: [...hop.members, botMember(seed)] });
         },
 
+        inviteContact: (id, name) => {
+          const hop = get().hop;
+          if (!hop || hop.status !== 'lobby') return;
+          if (hop.members.some((m) => m.id === id)) return;
+          const seed = BOTS[hop.members.length % BOTS.length];
+          const member: HopMember = { ...botMember(seed), id, name };
+          push({ ...hop, members: [...hop.members, member] });
+        },
+
         uninvite: (botId) => {
           const hop = get().hop;
           if (!hop || hop.status !== 'lobby' || botId === YOU) return;
@@ -179,6 +196,17 @@ export const useTogether = create<TogetherState>()(
           push({ ...hop, members });
         },
 
+        answerFoodQuestions: (memberId, answers) => {
+          const hop = get().hop;
+          if (!hop) return;
+          const members = hop.members.map((m) =>
+            m.id === memberId
+              ? { ...m, hopAnswers: answers, profile: applyWeightDeltas(m.profile, foodAnswerDeltas(answers)) }
+              : m,
+          );
+          push({ ...hop, members });
+        },
+
         finishAnswering: (places, userCoords) => {
           const hop = get().hop;
           if (!hop) return;
@@ -189,7 +217,10 @@ export const useTogether = create<TogetherState>()(
             return;
           }
           // build the shared deck, and (keyless) precompute the friends' swipes
-          const shortlist = groupShortlist(members, places, userCoords);
+          const you = members.find((m) => m.id === YOU);
+          const shortlist = groupShortlist(members, places, userCoords, {
+            foodAnswers: you?.hopAnswers ?? null,
+          });
           const byId = new Map(places.map((p) => [p.id, p]));
           const swiped = members.map((m) => {
             if (m.kind === 'you' || !isSimulated()) return m;

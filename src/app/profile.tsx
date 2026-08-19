@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Screen, Text, Kicker, PillButton } from '@/components/ui';
 import { PlaceImage } from '@/components/PlaceImage';
 import { AppHeader } from '@/components/AppHeader';
+import { BrandMark } from '@/components/BrandMark';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { useTaste } from '@/core/taste/store';
 import { useLibrary } from '@/core/library/store';
@@ -14,8 +15,10 @@ import { usePlacesStore } from '@/core/places-store';
 import { confidentTraits } from '@/core/taste/profile';
 import { TAG_LABELS } from '@/core/taste/tags';
 import { CATEGORY_LABEL, type Place } from '@/core/places';
-import { computeStreak } from '@/core/library/streak';
-import { StreakFlagIcon, SettingsIcon } from '@/theme/icons';
+import { computeStreak, computeMaxStreak, computeStreakDays } from '@/core/library/streak';
+import { StreakStrip } from '@/components/StreakStrip';
+import { TagCloud } from '@/components/TagCloud';
+import { SettingsIcon } from '@/theme/icons';
 
 /**
  * Head row shows real name (`onboarding/store.ts`), real avatar photo (same
@@ -48,10 +51,10 @@ export default function ProfileScreen() {
   const beenCount = ratedIds.length;
   const beenPlaces = ratedIds.map((id) => byId[id]).filter(Boolean) as Place[];
 
-  const streak = useMemo(
-    () => computeStreak(Object.values(ratings).map((r) => r.at)),
-    [ratings],
-  );
+  const ratingTimestamps = useMemo(() => Object.values(ratings).map((r) => r.at), [ratings]);
+  const streak = useMemo(() => computeStreak(ratingTimestamps), [ratingTimestamps]);
+  const maxStreak = useMemo(() => computeMaxStreak(ratingTimestamps), [ratingTimestamps]);
+  const streakDays = useMemo(() => computeStreakDays(ratingTimestamps), [ratingTimestamps]);
 
   const traits = useMemo(() => confidentTraits(profile).slice(0, 8), [profile]);
   const learned = profile.answers.length > 0;
@@ -71,7 +74,7 @@ export default function ProfileScreen() {
           </Pressable>
         }
       />
-      <Screen>
+      <View style={styles.headBlock}>
         <View style={styles.head}>
           {photoUri ? (
             <Image source={{ uri: photoUri }} style={styles.avatarImg} />
@@ -84,9 +87,12 @@ export default function ProfileScreen() {
             />
           )}
           <View style={{ flex: 1 }}>
-            <Text variant="display" size={24}>
-              {displayName}
-            </Text>
+            <View style={styles.nameRow}>
+              <BrandMark size={18} style={styles.nameMark} />
+              <Text variant="display" size={24}>
+                {displayName}
+              </Text>
+            </View>
             <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 4 }}>
               {locationLabel}
             </Text>
@@ -95,28 +101,27 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+      </View>
 
-        <View style={styles.streakCard}>
-          <Text style={styles.streakSparkle}>✦</Text>
-          <View style={styles.streakIconWrap}>
-            <StreakFlagIcon size={22} color={colors.onDark} />
+      <Screen padTop={false}>
+        <View style={styles.streakStatsRow}>
+          <View style={styles.streakStatTile}>
+            <Text variant="display" size={22}>
+              {streak}
+            </Text>
+            <Kicker style={{ marginTop: 4 }}>Night streak</Kicker>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="bodyMedium" size={15} color={colors.onDark}>
-              {streak > 0 ? `${streak}-night streak` : 'No streak yet'}
+          <View style={styles.streakStatTile}>
+            <Text variant="display" size={22}>
+              {maxStreak}
             </Text>
-            <Text variant="body" size={12} color="rgba(247,242,232,0.6)" style={{ marginTop: 2 }}>
-              based on rated visits
-            </Text>
+            <Kicker style={{ marginTop: 4 }}>Max streak</Kicker>
           </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text variant="serif" size={26} color={colors.onDark}>
-              {beenCount}
-            </Text>
-            <Text variant="kicker" size={9} color="rgba(247,242,232,0.5)">
-              NIGHTS
-            </Text>
-          </View>
+        </View>
+
+        <Kicker style={{ marginBottom: spacing.sm }}>Daily streak</Kicker>
+        <View style={{ marginBottom: spacing.xl }}>
+          <StreakStrip days={streakDays} />
         </View>
 
         <View style={styles.statsRow}>
@@ -181,16 +186,10 @@ export default function ProfileScreen() {
           </>
         ) : null}
 
-        <Kicker style={{ marginBottom: 12, marginTop: spacing.md }}>Your taste</Kicker>
+        <Kicker style={{ marginBottom: 12, marginTop: spacing.md }}>Your likes</Kicker>
         {traits.length > 0 ? (
-          <View style={styles.tagWrap}>
-            {traits.map(([tag]) => (
-              <View key={tag} style={styles.tagPill}>
-                <Text variant="bodyMedium" size={12} color={colors.ink}>
-                  {TAG_LABELS[tag]}
-                </Text>
-              </View>
-            ))}
+          <View style={styles.likesBox}>
+            <TagCloud traits={traits} labels={TAG_LABELS} />
           </View>
         ) : (
           <Text variant="serif" size={16} color={colors.ink70} style={{ marginBottom: spacing.lg }}>
@@ -214,8 +213,11 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: spacing.xl },
+  headBlock: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, backgroundColor: colors.paper },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatarImg: { width: 56, height: 56, borderRadius: 28 },
+  nameRow: { flexDirection: 'row', alignItems: 'center' },
+  nameMark: { marginRight: 6 },
   settingsBtn: {
     width: 36,
     height: 36,
@@ -225,25 +227,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  streakCard: {
-    flexDirection: 'row',
+  streakStatsRow: { flexDirection: 'row', gap: 10, marginBottom: spacing.lg },
+  streakStatTile: {
+    flex: 1,
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.xl,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  streakSparkle: { position: 'absolute', top: -4, right: 10, fontSize: 16, color: 'rgba(200,67,28,0.6)' },
-  streakIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.ink10,
+    paddingVertical: 16,
   },
   sectionHead: {
     flexDirection: 'row',
@@ -270,13 +262,10 @@ const styles = StyleSheet.create({
     borderColor: colors.ink10,
     overflow: 'hidden',
   },
-  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.lg },
-  tagPill: {
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.ink14,
-    backgroundColor: colors.card,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+  likesBox: {
+    backgroundColor: colors.panel,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
   },
 });

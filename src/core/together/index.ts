@@ -22,6 +22,11 @@ export {
   pickTallies,
   groupPick,
   groupFit,
+  foodFit,
+  foodAnswerDeltas,
+  topPickFor,
+  groupShortlist,
+  botSwipe,
   winningSlot,
 } from './match';
 export { setHopSync, hopSync, isSimulated, noopSync, type HopSync } from './sync';

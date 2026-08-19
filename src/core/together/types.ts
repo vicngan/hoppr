@@ -19,6 +19,16 @@ export type HopStatus =
   | 'picked' // a place cleared the group
   | 'planned'; // a time is locked in
 
+/** A member's raw picks from the 6 unified food questions (invite → questions step). */
+export type HopFoodAnswers = {
+  cuisines: string[];
+  vibe: string;
+  dietary: string[];
+  price: 1 | 2 | 3 | 4;
+  adventurous: 'adventurous' | 'familiar';
+  distance: 'close' | 'nearby' | 'anywhere';
+};
+
 /** One person at the table. "you" is this device; friends are bots (keyless) or real joiners. */
 export type HopMember = {
   id: string;
@@ -35,6 +45,10 @@ export type HopMember = {
    * so a hop never pollutes your real taste. Friends carry seeded profiles.
    */
   profile: TasteProfile;
+  /** raw picks from the 6 unified food questions, kept separate from the derived `profile` deltas. */
+  hopAnswers?: HopFoodAnswers;
+  /** this member's own highest-liked shortlist place, once they've swiped. */
+  topSwipeId?: string | null;
   /** placeId → liked (true) / passed (false), filled as they swipe. */
   swipes: Record<string, boolean>;
   /** finished swiping the whole shortlist. */

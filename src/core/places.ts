@@ -1,4 +1,5 @@
 import { TAGS, type Tag } from './taste/tags';
+import type { Dietary } from './menu/types';
 
 export type PlaceCategory = 'cafe' | 'bar' | 'restaurant' | 'study' | 'photo' | 'bakery';
 
@@ -10,7 +11,7 @@ export type Place = {
   coords: { lat: number; lng: number };
   /** 0..1 baseline popularity */
   popularity: number;
-  /** 1..3 price level */
+  /** 1..4 price level */
   price: number;
   tags: Tag[];
   blurb: string;
@@ -21,6 +22,12 @@ export type Place = {
   rating?: number;
   /** raw review count, when known */
   reviewCount?: number;
+  /** mock cuisine tags — no real cuisine data source yet, used by the Together food-question matching */
+  cuisine?: string[];
+  /** mock dietary-friendliness signal at the place level (distinct from per-dish `MenuItem.dietary`) */
+  dietaryFriendly?: Dietary[];
+  /** mock display hours, e.g. "7am – 6pm" */
+  hoursLabel?: string;
 };
 
 /** Rating/review thresholds for the "Hidden gems" row — high rating, still under the radar. */
@@ -55,13 +62,16 @@ export const PLACES: Place[] = [
     area: 'Kerrytown',
     coords: { lat: 42.2864, lng: -83.7434 },
     popularity: 0.86,
-    price: 2,
+    price: 1,
     tags: [T.coffee, T.quiet, T.bright, T.outlets, T.solo, T.lingering, T.study],
     blurb: 'Quiet until noon, outlets everywhere, and nobody rushes you.',
     quotes: [
       { text: 'Sat two hours on one cortado and nobody blinked.', who: 'Wren · regular' },
       { text: 'Back-left table has the outlets and the best light.', who: 'Theo · 3 visits' },
     ],
+    cuisine: ['coffee', 'cafe'],
+    dietaryFriendly: ['veg', 'vegan', 'dairy_free'],
+    hoursLabel: '7am – 6pm',
   },
   {
     id: 'marrow',
@@ -73,6 +83,9 @@ export const PLACES: Place[] = [
     price: 2,
     tags: [T.coffee, T.quiet, T.bright, T.comfy, T.solo, T.lingering],
     blurb: 'A hushed back room and a big communal table by the window.',
+    cuisine: ['coffee', 'cafe', 'brunch'],
+    dietaryFriendly: ['veg', 'gf'],
+    hoursLabel: '7am – 5pm',
   },
   {
     id: 'foldwell',
@@ -86,6 +99,9 @@ export const PLACES: Place[] = [
     blurb: 'Reading nooks upstairs, warm lamps, and free tea refills.',
     rating: 4.7,
     reviewCount: 38,
+    cuisine: ['coffee', 'tea'],
+    dietaryFriendly: ['veg', 'vegan'],
+    hoursLabel: '8am – 9pm',
   },
   {
     id: 'cadence',
@@ -97,6 +113,9 @@ export const PLACES: Place[] = [
     price: 2,
     tags: [T.drinks, T.lively, T.moody, T.group, T.hangout],
     blurb: 'Low light, good vinyl, and it was half full an hour ago.',
+    cuisine: ['bar food', 'american'],
+    dietaryFriendly: ['veg'],
+    hoursLabel: '4pm – 2am',
   },
   {
     id: 'halyard',
@@ -108,6 +127,9 @@ export const PLACES: Place[] = [
     price: 3,
     tags: [T.food, T.lively, T.group, T.hangout, T.splurge],
     blurb: 'Shared plates, buzzy, but you can still hear each other.',
+    cuisine: ['new american', 'small plates'],
+    dietaryFriendly: ['veg', 'gf'],
+    hoursLabel: '5pm – 11pm',
   },
   {
     id: 'juniper',
@@ -116,11 +138,14 @@ export const PLACES: Place[] = [
     area: 'Downtown',
     coords: { lat: 42.2795, lng: -83.7452 },
     popularity: 0.7,
-    price: 3,
+    price: 4,
     tags: [T.drinks, T.moody, T.quiet, T.solo, T.splurge],
     blurb: 'Small, warm, and a properly made negroni.',
     rating: 4.8,
     reviewCount: 52,
+    cuisine: ['cocktails'],
+    dietaryFriendly: [],
+    hoursLabel: '6pm – 1am',
   },
   {
     id: 'westerly',
@@ -132,6 +157,9 @@ export const PLACES: Place[] = [
     price: 1,
     tags: [T.food, T.cheap, T.lingering, T.bright, T.solo, T.group],
     blurb: 'All-day breakfast, window booths, and nobody hurries you.',
+    cuisine: ['american', 'diner', 'breakfast'],
+    dietaryFriendly: ['veg', 'gf'],
+    hoursLabel: '7am – 9pm',
   },
   {
     id: 'lumen',
@@ -143,6 +171,9 @@ export const PLACES: Place[] = [
     price: 2,
     tags: [T.coffee, T.photo, T.bright, T.quiet, T.hangout],
     blurb: 'A skylight, plants, and quietly the most photogenic room in town.',
+    cuisine: ['coffee', 'cafe'],
+    dietaryFriendly: ['veg', 'vegan'],
+    hoursLabel: '9am – 6pm',
   },
   {
     id: 'grainhaus',
@@ -154,6 +185,9 @@ export const PLACES: Place[] = [
     price: 1,
     tags: [T.coffee, T.cheap, T.quick, T.bright, T.solo],
     blurb: 'Grab a laminated pastry and a filter coffee; in and out in ten.',
+    cuisine: ['bakery', 'coffee'],
+    dietaryFriendly: ['veg'],
+    hoursLabel: '7am – 3pm',
   },
   {
     id: 'salt',
@@ -162,9 +196,12 @@ export const PLACES: Place[] = [
     area: 'Main St',
     coords: { lat: 42.2811, lng: -83.7469 },
     popularity: 0.77,
-    price: 3,
+    price: 4,
     tags: [T.food, T.moody, T.group, T.splurge, T.hangout],
     blurb: 'Candlelit, a little romantic, good for a slow group dinner.',
+    cuisine: ['mediterranean', 'new american'],
+    dietaryFriendly: ['veg', 'gf', 'dairy_free'],
+    hoursLabel: '5pm – 10pm',
   },
   {
     id: 'perch',
@@ -178,6 +215,9 @@ export const PLACES: Place[] = [
     blurb: 'Rooftop light at golden hour; bring a friend and a camera.',
     rating: 4.6,
     reviewCount: 91,
+    cuisine: ['small plates', 'cocktails'],
+    dietaryFriendly: ['veg'],
+    hoursLabel: '11am – 10pm',
   },
   {
     id: 'stackhouse',
@@ -189,6 +229,9 @@ export const PLACES: Place[] = [
     price: 1,
     tags: [T.study, T.quiet, T.outlets, T.solo, T.lingering, T.cheap],
     blurb: 'Silent floor with a plug at every seat and bottomless drip.',
+    cuisine: ['coffee'],
+    dietaryFriendly: ['veg', 'vegan'],
+    hoursLabel: '7am – 11pm',
   },
   {
     id: 'moss',
@@ -200,6 +243,9 @@ export const PLACES: Place[] = [
     price: 2,
     tags: [T.coffee, T.bright, T.comfy, T.hangout, T.group, T.lingering],
     blurb: 'Sunny corner spot, comfy couches, easy to lose an afternoon.',
+    cuisine: ['coffee', 'brunch'],
+    dietaryFriendly: ['veg', 'gf'],
+    hoursLabel: '7am – 6pm',
   },
   {
     id: 'emberline',
@@ -208,9 +254,12 @@ export const PLACES: Place[] = [
     area: 'Downtown',
     coords: { lat: 42.2807, lng: -83.7441 },
     popularity: 0.82,
-    price: 2,
+    price: 3,
     tags: [T.drinks, T.lively, T.group, T.hangout, T.moody],
     blurb: 'Gets loud after nine on a Friday — in the good way.',
+    cuisine: ['bar food', 'cocktails'],
+    dietaryFriendly: ['veg'],
+    hoursLabel: '4pm – 2am',
   },
 ];
 
@@ -269,7 +318,7 @@ export function deriveSpecs(place: Place): Spec[] {
         ? { label: 'Pace', value: 'Quick turnover', fill: 0.3 }
         : { label: 'Pace', value: 'Easy', fill: 0.6 },
   );
-  specs.push({ label: 'Price', value: '$'.repeat(place.price), fill: place.price / 3 });
+  specs.push({ label: 'Price', value: '$'.repeat(place.price), fill: place.price / 4 });
 
   return specs;
 }

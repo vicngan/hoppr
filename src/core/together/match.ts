@@ -1,12 +1,74 @@
 import { tasteFit } from '../taste/profile';
-import type { Tag } from '../taste/tags';
+import { TAGS, type Tag } from '../taste/tags';
 import { haversineMiles } from '../engine/rules';
 import type { Coords } from '../engine/types';
-import type { Place } from '../places';
+import { isHiddenGem, type Place } from '../places';
+import type { Dietary } from '../menu/types';
 import { QUESTIONS, type Question } from '../questions';
-import type { Hop, HopMember, PickTally, TimeSlot } from './types';
+import type { Hop, HopFoodAnswers, HopMember, PickTally, TimeSlot } from './types';
 
 const MAX_MILES = 3;
+
+/** How far the distance-willingness answer widens the search radius. */
+const MAX_MILES_FOR_DISTANCE: Record<HopFoodAnswers['distance'], number> = {
+  close: 1.5,
+  nearby: 3,
+  anywhere: 8,
+};
+
+/**
+ * How well a place fits one member's 6 food-question answers, 0..1. Blended
+ * into `groupShortlist` alongside `groupFit` (multi-member taste) — this is
+ * the single-member "what did you actually ask for tonight" signal.
+ */
+export function foodFit(answers: HopFoodAnswers, place: Place): number {
+  let score = 0;
+  let weight = 0;
+
+  if (answers.cuisines.length > 0) {
+    const placeCuisines = (place.cuisine ?? []).map((c) => c.toLowerCase());
+    const wanted = answers.cuisines.map((c) => c.toLowerCase());
+    score += placeCuisines.some((c) => wanted.includes(c)) ? 1 : 0.3;
+    weight += 1;
+  }
+
+  if (answers.dietary.length > 0) {
+    const friendly = place.dietaryFriendly ?? [];
+    const covered = answers.dietary.filter((d) => friendly.includes(d as Dietary)).length;
+    score += covered / answers.dietary.length;
+    weight += 1;
+  }
+
+  score += Math.max(0, 1 - Math.abs(answers.price - place.price) / 3);
+  weight += 1;
+
+  score += answers.adventurous === 'adventurous'
+    ? (isHiddenGem(place) ? 1 : 1 - place.popularity)
+    : place.popularity;
+  weight += 1;
+
+  return weight > 0 ? score / weight : 0.5;
+}
+
+/** Vibe-question picks nudge the same shared tag vocabulary the rest of taste uses. */
+const VIBE_TAGS: Record<string, Tag[]> = {
+  lively: [TAGS.lively, TAGS.group],
+  cozy: [TAGS.comfy, TAGS.moody],
+  quiet: [TAGS.quiet, TAGS.study],
+};
+
+/**
+ * Weight-delta nudges from the vibe + price picks only — cuisine/dietary/
+ * adventurous/distance stay in `HopFoodAnswers` for candidate filtering via
+ * `foodFit`, since no existing tag maps to them.
+ */
+export function foodAnswerDeltas(answers: HopFoodAnswers): Partial<Record<Tag, number>> {
+  const deltas: Partial<Record<Tag, number>> = {};
+  for (const t of VIBE_TAGS[answers.vibe] ?? []) deltas[t] = 0.3;
+  if (answers.price <= 2) deltas[TAGS.cheap] = (deltas[TAGS.cheap] ?? 0) + 0.25;
+  else deltas[TAGS.splurge] = (deltas[TAGS.splurge] ?? 0) + 0.25;
+  return deltas;
+}
 
 /** The private-answer flow for a hop: a quick 3-question read on tonight's mood. */
 export const HOP_QUESTION_IDS = ['mood', 'purpose', 'budget'] as const;
@@ -47,28 +109,58 @@ export function botSwipe(member: HopMember, place: Place): boolean {
   return tasteFit(member.profile, place.tags) >= 0.52;
 }
 
+export type ShortlistOptions = {
+  /** candidate pool size — 4-6 for the redesigned swipe deck (default 6) */
+  size?: number;
+  /** the host's own 6 food-question picks, blended in as `foodFit` */
+  foodAnswers?: HopFoodAnswers | null;
+  /** a place to boost into the pool (from Detail's "Plan with friends" CTA) without narrowing to it */
+  boostPlaceId?: string | null;
+};
+
 /**
- * Build the swipe deck: rank places by group fit (with a little proximity and
- * popularity), best first, and take the top `size`.
+ * Build the swipe deck: rank places by group fit + food-question fit (with a
+ * little proximity and popularity), best first, and take the top `size`. A
+ * `boostPlaceId` is nudged to the front rather than narrowing the pool to it.
  */
 export function groupShortlist(
   members: HopMember[],
   places: Place[],
   userCoords: Coords | null,
-  size = 8,
+  opts: ShortlistOptions = {},
 ): string[] {
+  const { size = 6, foodAnswers, boostPlaceId } = opts;
+  const maxMiles = foodAnswers ? MAX_MILES_FOR_DISTANCE[foodAnswers.distance] : MAX_MILES;
   const scored = places.map((place) => {
     const g = groupScore(members, place);
+    const f = foodAnswers ? foodFit(foodAnswers, place) : 0.5;
     const distanceMi = userCoords ? haversineMiles(userCoords, place.coords) : null;
     const proximity =
-      distanceMi == null ? 0.6 : Math.max(0, 1 - Math.min(distanceMi, MAX_MILES) / MAX_MILES);
-    const score = 0.6 * g + 0.15 * proximity + 0.25 * place.popularity;
+      distanceMi == null ? 0.6 : Math.max(0, 1 - Math.min(distanceMi, maxMiles) / maxMiles);
+    let score = 0.45 * g + 0.25 * f + 0.1 * proximity + 0.2 * place.popularity;
+    if (boostPlaceId && place.id === boostPlaceId) score += 0.5;
     return { id: place.id, score };
   });
   return scored
     .sort((a, b) => b.score - a.score)
     .slice(0, size)
     .map((s) => s.id);
+}
+
+/**
+ * One member's own top pick among a candidate pool: their highest-liked
+ * swipe if they've swiped, else their best-scored candidate. Used by the
+ * results screen to show "each person's own top pick" (not group overlap).
+ */
+export function topPickFor(member: HopMember, places: Place[]): string | null {
+  const byId = new Map(places.map((p) => [p.id, p]));
+  const likedIds = Object.entries(member.swipes)
+    .filter(([, liked]) => liked)
+    .map(([id]) => id)
+    .map((id) => byId.get(id))
+    .filter((p): p is Place => !!p);
+  const pool = likedIds.length > 0 ? likedIds : places;
+  return pool.slice().sort((a, b) => tasteFit(member.profile, b.tags) - tasteFit(member.profile, a.tags))[0]?.id ?? null;
 }
 
 /**

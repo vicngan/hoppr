@@ -32,4 +32,60 @@ export const SEED_MENUS: Record<string, MenuItem[]> = {
     { id: 'ca-na', name: 'House ginger soda', price: 5.0, section: 'Zero proof', source: 'seed', dietary: ['vegan'], tags: ['light', 'sweet'] },
     { id: 'ca-fries', name: 'Rosemary fries', price: 8.0, section: 'Snacks', source: 'seed', dietary: ['vegan'], tags: ['savory', 'sharing', 'small'] },
   ],
+  marrow: [
+    { id: 'ma-latte', name: 'Brown butter latte', price: 5.5, section: 'Espresso', source: 'seed', dietary: ['veg'], tags: ['caffeine', 'sweet'] },
+    { id: 'ma-pourover', name: 'Single-origin pourover', price: 6.0, section: 'Coffee', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'light'] },
+    { id: 'ma-scone', name: 'Buckwheat scone', price: 4.5, section: 'Pastry', source: 'seed', dietary: ['veg'], tags: ['savory', 'small'] },
+    { id: 'ma-toast', name: 'Whipped feta toast', price: 9.0, section: 'Kitchen', source: 'seed', dietary: ['veg'], tags: ['savory', 'light', 'sharing'] },
+  ],
+  foldwell: [
+    { id: 'fo-tea', name: 'Loose-leaf tea, any blend', price: 4.0, section: 'Tea', source: 'seed', dietary: ['vegan'], tags: ['light', 'small'] },
+    { id: 'fo-cocoa', name: 'Dark hot cocoa', price: 5.0, section: 'Not coffee', source: 'seed', dietary: ['veg'], tags: ['sweet'] },
+    { id: 'fo-shortbread', name: 'Rosemary shortbread', price: 3.5, section: 'Pastry', source: 'seed', dietary: ['veg'], tags: ['sweet', 'small'] },
+  ],
+  juniper: [
+    { id: 'ju-negroni', name: 'Barrel-aged negroni', price: 15.0, section: 'Cocktails', source: 'seed', dietary: [], tags: ['alcohol'] },
+    { id: 'ju-martini', name: 'Dirty martini', price: 14.0, section: 'Cocktails', source: 'seed', dietary: [], tags: ['alcohol'] },
+    { id: 'ju-na', name: 'Seedlip & tonic', price: 9.0, section: 'Zero proof', source: 'seed', dietary: ['vegan'], tags: ['light'] },
+    { id: 'ju-board', name: 'Cheese & charcuterie board', price: 22.0, section: 'Snacks', source: 'seed', dietary: ['gf'], tags: ['hearty', 'sharing', 'large'] },
+  ],
+  westerly: [
+    { id: 'we-eggs', name: 'Diner eggs, any style', price: 11.0, section: 'Breakfast', source: 'seed', dietary: ['gf'], tags: ['hearty', 'savory'] },
+    { id: 'we-pancakes', name: 'Buttermilk pancakes', price: 10.0, section: 'Breakfast', source: 'seed', dietary: ['veg'], tags: ['sweet', 'hearty', 'sharing'] },
+    { id: 'we-blt', name: 'Classic BLT', price: 12.0, section: 'Lunch', source: 'seed', dietary: [], tags: ['savory', 'hearty'] },
+    { id: 'we-coffee', name: 'Bottomless drip coffee', price: 3.0, section: 'Drinks', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'light'] },
+  ],
+  lumen: [
+    { id: 'lu-latte', name: 'Lavender oat latte', price: 5.75, section: 'Espresso', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'sweet'] },
+    { id: 'lu-tonic', name: 'Coffee tonic', price: 6.0, section: 'Coffee', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'light'] },
+    { id: 'lu-tart', name: 'Fruit galette slice', price: 6.5, section: 'Pastry', source: 'seed', dietary: ['veg'], tags: ['sweet', 'small'] },
+  ],
+  salt: [
+    { id: 'sa-hummus', name: 'Whipped hummus, charred bread', price: 14.0, section: 'Small plates', source: 'seed', dietary: ['vegan'], tags: ['light', 'sharing'] },
+    { id: 'sa-lamb', name: 'Braised lamb shoulder', price: 34.0, section: 'Mains', source: 'seed', dietary: ['gf'], tags: ['hearty', 'large', 'savory'] },
+    { id: 'sa-cauli', name: 'Charred cauliflower, tahini', price: 22.0, section: 'Mains', source: 'seed', dietary: ['vegan', 'gf'], tags: ['hearty', 'savory', 'sharing'] },
+    { id: 'sa-wine', name: 'Glass of house red', price: 14.0, section: 'Drinks', source: 'seed', dietary: [], tags: ['alcohol'] },
+    { id: 'sa-baklava', name: 'Pistachio baklava', price: 10.0, section: 'Dessert', source: 'seed', dietary: ['veg'], tags: ['sweet', 'sharing'] },
+  ],
+  perch: [
+    { id: 'pe-spritz', name: 'Rooftop spritz', price: 13.0, section: 'Cocktails', source: 'seed', dietary: [], tags: ['alcohol', 'light'] },
+    { id: 'pe-flatbread', name: 'Fig & prosciutto flatbread', price: 17.0, section: 'Small plates', source: 'seed', dietary: [], tags: ['savory', 'sharing'] },
+    { id: 'pe-salad', name: 'Charred corn salad', price: 13.0, section: 'Small plates', source: 'seed', dietary: ['vegan', 'gf'], tags: ['light', 'sharing'] },
+  ],
+  stackhouse: [
+    { id: 'st-drip', name: 'Bottomless drip coffee', price: 3.0, section: 'Coffee', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'light'] },
+    { id: 'st-coldbrew', name: 'Cold brew', price: 4.5, section: 'Coffee', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'light'] },
+    { id: 'st-bagel', name: 'Everything bagel, cream cheese', price: 5.5, section: 'Kitchen', source: 'seed', dietary: ['veg'], tags: ['savory', 'small'] },
+  ],
+  moss: [
+    { id: 'mo-latte', name: 'Maple oat latte', price: 5.5, section: 'Espresso', source: 'seed', dietary: ['vegan'], tags: ['caffeine', 'sweet'] },
+    { id: 'mo-hotchoc', name: 'Salted hot chocolate', price: 5.0, section: 'Not coffee', source: 'seed', dietary: ['veg'], tags: ['sweet'] },
+    { id: 'mo-quiche', name: 'Slice of quiche', price: 8.5, section: 'Kitchen', source: 'seed', dietary: ['veg'], tags: ['savory', 'hearty', 'small'] },
+  ],
+  emberline: [
+    { id: 'em-oldfashioned', name: 'Smoked old fashioned', price: 14.0, section: 'Cocktails', source: 'seed', dietary: [], tags: ['alcohol'] },
+    { id: 'em-lager', name: 'House lager', price: 7.0, section: 'On tap', source: 'seed', dietary: ['vegan'], tags: ['alcohol', 'light'] },
+    { id: 'em-wings', name: 'Buffalo wings', price: 14.0, section: 'Snacks', source: 'seed', dietary: [], tags: ['savory', 'sharing', 'hearty'] },
+    { id: 'em-fries', name: 'Truffle fries', price: 10.0, section: 'Snacks', source: 'seed', dietary: ['vegan'], tags: ['savory', 'sharing'] },
+  ],
 };

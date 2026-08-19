@@ -10,7 +10,7 @@ const MARK_LOGO = require('../assets/brand/hoppr-mark-v2-trimmed.png');
 const LOCKUP_LOGO = require('../assets/brand/hoppr-lockup-v2-trimmed.png');
 
 export type AppHeaderProps = {
-  variant: 'root' | 'sub';
+  variant: 'root' | 'sub' | 'wizard';
   title?: string;
   onBack?: () => void;
   /** Home-only: render the profile-dot avatar button (navigates to /profile). */
@@ -23,16 +23,23 @@ export type AppHeaderProps = {
   onBellPress?: () => void;
   /** Extra content rendered at the right edge, after the built-in Home controls. */
   right?: ReactNode;
+  /** `sub`-only: swap the small icon-only mark for the full lockup wordmark (default 'mark'). Used by pushed "main" screens like place/[id] and menu/[id] that still need a back button. */
+  logo?: 'mark' | 'lockup';
 };
 
 /**
- * Persistent screen header. Two variants:
- *  - `sub`: 34px circular back button + icon-only mark logo. Used on every
- *    non-root screen.
- *  - `root`: full wordmark lockup, no back button. Only Home additionally
- *    passes `showBell`/`showProfileDot`/`streak` to render the bell, streak
- *    pill, and profile-dot avatar — every other root-ish screen (tabs) just
- *    gets the bare lockup.
+ * Persistent screen header. Three variants:
+ *  - `sub`: 34px circular back button + icon-only mark logo (or the full
+ *    lockup wordmark via `logo="lockup"`, for pushed "main" screens like
+ *    place/[id] and menu/[id] that still need a back button). Used on every
+ *    non-root, non-wizard screen.
+ *  - `root`: no back button. Only Home additionally passes
+ *    `showBell`/`showProfileDot`/`streak`, which also renders the full
+ *    wordmark lockup here — every other root-ish screen (tabs) renders no
+ *    logo in the header at all; those screens place a small `BrandMark`
+ *    icon directly beside their own body title instead (see `BrandMark.tsx`).
+ *  - `wizard`: back button + centered icon-only mark logo, no wordmark/
+ *    title. Used by every screen inside the together/plan pipeline.
  *
  * Sticky behavior: this component is designed to sit *above* a screen's
  * scroll container (e.g. above `<Screen scroll>`'s ScrollView), which is
@@ -52,9 +59,27 @@ export function AppHeader({
   streak,
   onBellPress,
   right,
+  logo = 'mark',
 }: AppHeaderProps) {
   const router = useRouter();
   const isHomeChrome = variant === 'root' && (showProfileDot || showBell || streak != null);
+
+  if (variant === 'wizard') {
+    return (
+      <View style={[styles.root, styles.rootSub, styles.wizardRow]}>
+        <View style={styles.wizardSide}>
+          <Pressable
+            onPress={onBack}
+            hitSlop={8}
+            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
+            <ChevronBackIcon size={18} color={colors.ink} />
+          </Pressable>
+        </View>
+        <Image source={MARK_LOGO} style={styles.markLogoCentered} resizeMode="contain" />
+        <View style={[styles.wizardSide, styles.wizardSideRight]}>{right}</View>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -72,14 +97,18 @@ export function AppHeader({
               style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
               <ChevronBackIcon size={18} color={colors.ink} />
             </Pressable>
-            <Image source={MARK_LOGO} style={styles.markLogo} resizeMode="contain" />
+            <Image
+              source={logo === 'lockup' ? LOCKUP_LOGO : MARK_LOGO}
+              style={logo === 'lockup' ? styles.lockupLogo : styles.markLogo}
+              resizeMode="contain"
+            />
             {title ? (
               <Text variant="bodyMedium" size={15} color={colors.ink} style={styles.title}>
                 {title}
               </Text>
             ) : null}
           </>
-        ) : (
+        ) : isHomeChrome ? (
           <>
             <Image source={LOCKUP_LOGO} style={styles.lockupLogo} resizeMode="contain" />
             {title ? (
@@ -88,7 +117,11 @@ export function AppHeader({
               </Text>
             ) : null}
           </>
-        )}
+        ) : title ? (
+          <Text variant="bodyMedium" size={15} color={colors.ink} style={styles.title}>
+            {title}
+          </Text>
+        ) : null}
       </View>
 
       {isHomeChrome ? (
@@ -144,8 +177,12 @@ const styles = StyleSheet.create({
   // React Native Web passes `position: 'sticky'` through directly; on native
   // RN it's an inert style (the header already sits outside the ScrollView).
   sticky: { position: 'sticky' as unknown as 'relative', top: 0, zIndex: 5 },
-  rootSub: { paddingTop: 72 },
-  rootRoot: { paddingTop: 64 },
+  rootSub: { paddingTop: 76 },
+  rootRoot: { paddingTop: 68 },
+  wizardRow: { justifyContent: 'space-between', position: 'relative' },
+  wizardSide: { width: 34, alignItems: 'flex-start' },
+  wizardSideRight: { alignItems: 'flex-end' },
+  markLogoCentered: { width: 26, height: 26, position: 'absolute', left: '50%', marginLeft: -13 },
   left: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   backBtn: {
@@ -158,7 +195,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markLogo: { width: 26, height: 26 },
-  lockupLogo: { height: 24, width: 120 },
+  // The lockup asset is the rabbit doodle + "Hoppr" script stacked roughly
+  // square (~293x234), not a wide horizontal wordmark — size to that real
+  // aspect ratio rather than a wide fixed box, or `resizeMode="contain"`
+  // just letterboxes it down to a sliver.
+  lockupLogo: { height: 40, width: 50 },
   title: { marginLeft: 0 },
   iconBtn: {
     width: 34,

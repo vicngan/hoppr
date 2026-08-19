@@ -4,6 +4,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Screen, Text, PillButton } from '@/components/ui';
 import { PlaceImage } from '@/components/PlaceImage';
 import { AppHeader } from '@/components/AppHeader';
+import { BrandMark } from '@/components/BrandMark';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { CATEGORY_LABEL, type Place, type PlaceCategory } from '@/core/places';
 import { usePlacesStore } from '@/core/places-store';
@@ -72,14 +73,19 @@ export default function SavedScreen() {
   return (
     <>
       <AppHeader variant="root" />
-      <Screen>
-        <Text variant="kicker" size={11} color={colors.ink45} style={{ marginBottom: 6 }}>
-          {savedPlaces.length} {savedPlaces.length === 1 ? 'SPOT' : 'SPOTS'}
-        </Text>
-        <Text variant="display" size={30} style={{ marginBottom: 18 }}>
-          Saved
-        </Text>
-
+      <View style={styles.titleBlock}>
+        <View style={styles.titleRow}>
+          <BrandMark size={22} style={styles.titleMark} />
+          <Text variant="display" size={30}>
+            Saved
+          </Text>
+          <View style={{ flex: 1 }} />
+          <Text variant="kicker" size={11} color={colors.ink45}>
+            {savedPlaces.length} {savedPlaces.length === 1 ? 'SPOT' : 'SPOTS'}
+          </Text>
+        </View>
+      </View>
+      <Screen padTop={false} contentStyle={styles.screenContent}>
         {availableFilters.length > 1 ? (
           <View style={styles.pills}>
             {availableFilters.map((f) => (
@@ -95,13 +101,15 @@ export default function SavedScreen() {
         ) : null}
 
         {items.length === 0 ? (
-          <View style={styles.empty}>
-            <Text variant="serif" size={19} color={colors.ink70} center>
-              {savedPlaces.length === 0
-                ? 'Nothing saved yet. Tap "Save for later" on a place you like.'
-                : 'Nothing in this filter yet.'}
-            </Text>
-            <PillButton label="Find somewhere" onPress={() => router.push('/explore' as Href)} />
+          <View style={styles.emptyArea}>
+            <View style={styles.empty}>
+              <Text variant="serif" size={19} color={colors.ink70} center>
+                {savedPlaces.length === 0
+                  ? 'Nothing saved yet. Tap "Save for later" on a place you like.'
+                  : 'Nothing in this filter yet.'}
+              </Text>
+              <PillButton label="Find somewhere" onPress={() => router.push('/explore' as Href)} />
+            </View>
           </View>
         ) : (
           <View style={styles.grid}>
@@ -131,8 +139,13 @@ export default function SavedScreen() {
 }
 
 const styles = StyleSheet.create({
+  screenContent: { flexGrow: 1 },
+  titleBlock: { paddingHorizontal: spacing.xl, paddingBottom: 18, backgroundColor: colors.paper },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  titleMark: { marginRight: 8 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.xl },
-  empty: { alignItems: 'center', gap: 18, paddingVertical: 48, paddingHorizontal: 20 },
+  emptyArea: { flex: 1, justifyContent: 'center' },
+  empty: { alignItems: 'center', gap: 18, paddingHorizontal: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   cell: {
     width: '47%',
