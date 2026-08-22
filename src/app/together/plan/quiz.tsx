@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, PillButton, ProgressDots } from '@/components/ui';
+import { Text, PillButton, ProgressDots } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { ChoicePill } from '@/components/onboarding/ChoicePill';
 import { ChoiceRow } from '@/components/onboarding/ChoiceRow';
-import { spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 import { useTogether, YOU_ID } from '@/core/together';
 import { usePlanStore } from '@/core/together/plan-store';
 import type { HopFoodAnswers } from '@/core/together/types';
@@ -165,12 +165,16 @@ export default function PlanQuizScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={[styles.body, styles.center]}>
-        <Kicker accent center style={{ marginBottom: 10 }}>
-          Question {step + 1} of {QUESTIONS.length}
-        </Kicker>
+    <View style={styles.root}>
+      <AppHeader
+        variant="wizard"
+        onBack={() => router.back()}
+        centerText={`Question ${step + 1} of ${QUESTIONS.length}`}
+      />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.body, styles.center]}
+        showsVerticalScrollIndicator={false}>
         <Text variant="kicker" center style={{ marginBottom: 12 }}>
           {question.kicker}
         </Text>
@@ -239,19 +243,20 @@ export default function PlanQuizScreen() {
               ))
             : null}
         </View>
+      </ScrollView>
 
+      <View style={styles.footer}>
         <PillButton
           label={step + 1 >= QUESTIONS.length ? "That's everyone — let's swipe" : 'Next'}
           variant="solid"
           style={{ width: '100%', maxWidth: 340, opacity: canAdvance ? 1 : 0.4 }}
           onPress={canAdvance ? next : undefined}
         />
-
         <View style={{ marginTop: spacing.lg }}>
           <ProgressDots count={QUESTIONS.length} active={step} />
         </View>
       </View>
-    </Screen>
+    </View>
   );
 }
 
@@ -260,7 +265,15 @@ function ChoicePillWrap({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl, paddingTop: spacing.xxl },
+  root: { flex: 1, backgroundColor: colors.paper },
+  body: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingVertical: spacing.xl },
   center: { alignItems: 'center' },
-  options: { width: '100%', maxWidth: 340, gap: 9, marginBottom: spacing.xxl },
+  options: { width: '100%', maxWidth: 340, gap: 9 },
+  footer: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.paper,
+  },
 });

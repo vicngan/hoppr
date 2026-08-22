@@ -29,6 +29,8 @@ export type AppHeaderProps = {
   stepLabel?: string;
   /** `wizard`-only: the step's title, rendered below `stepLabel`. */
   heading?: string;
+  /** `wizard`-only: replaces the centered logo with bigger centered text (e.g. "Question 1 of 6"), for screens that need the counter more than the mark. */
+  centerText?: string;
 };
 
 /**
@@ -42,8 +44,12 @@ export type AppHeaderProps = {
  *    wordmark lockup here — every other root-ish screen (tabs) renders no
  *    logo in the header at all; those screens place a small `BrandMark`
  *    icon directly beside their own body title instead (see `BrandMark.tsx`).
- *  - `wizard`: back button + centered icon-only mark logo, no wordmark/
- *    title. Used by every screen inside the together/plan pipeline.
+ *  - `wizard`: back button + centered icon-only mark logo (swapped for
+ *    bigger centered text via `centerText`, e.g. quiz.tsx's "Question 1 of
+ *    6", on screens where the counter matters more than the mark), no
+ *    wordmark/title. Used by every screen inside the together/plan pipeline.
+ *    `stepLabel`/`heading` render as a stacked block below that row (e.g.
+ *    invite.tsx's "Step 1 of 8" / "Invite the table.").
  *
  * Sticky behavior: this component is designed to sit *above* a screen's
  * scroll container (e.g. above `<Screen scroll>`'s ScrollView), which is
@@ -66,6 +72,7 @@ export function AppHeader({
   logo = 'mark',
   stepLabel,
   heading,
+  centerText,
 }: AppHeaderProps) {
   const router = useRouter();
   const isHomeChrome = variant === 'root' && (showProfileDot || showBell || streak != null);
@@ -82,7 +89,13 @@ export function AppHeader({
               <ChevronBackIcon size={18} color={colors.ink} />
             </Pressable>
           </View>
-          <Image source={MARK_LOGO} style={styles.markLogoCentered} resizeMode="contain" />
+          {centerText ? (
+            <Text variant="bodyMedium" size={15} color={colors.ink} style={styles.centerTextCentered}>
+              {centerText}
+            </Text>
+          ) : (
+            <Image source={MARK_LOGO} style={styles.markLogoCentered} resizeMode="contain" />
+          )}
           <View style={[styles.wizardSide, styles.wizardSideRight]}>{right}</View>
         </View>
         {stepLabel || heading ? (
@@ -210,6 +223,7 @@ const styles = StyleSheet.create({
   wizardSide: { width: 34, alignItems: 'flex-start' },
   wizardSideRight: { alignItems: 'flex-end' },
   markLogoCentered: { width: 40, height: 40, position: 'absolute', left: '50%', marginLeft: -20 },
+  centerTextCentered: { position: 'absolute', left: 0, right: 0, textAlign: 'center' },
   wizardTextBlock: { marginTop: spacing.lg },
   left: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
