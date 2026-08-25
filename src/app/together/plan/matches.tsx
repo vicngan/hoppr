@@ -6,6 +6,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { PlaceImage } from '@/components/PlaceImage';
 import { SwipeStack } from '@/components/together/SwipeStack';
 import { DetailPopup } from '@/components/together/DetailPopup';
+import { ShortlistReveal } from '@/components/together/ShortlistReveal';
 import { colors, spacing } from '@/theme/tokens';
 import { PLACES, CATEGORY_LABEL, type Place } from '@/core/places';
 import { useTaste } from '@/core/taste/store';
@@ -36,10 +37,13 @@ export default function PlanMatchesScreen() {
   const fromPlace = usePlanStore((s) => s.fromPlace);
   const candidateIds = usePlanStore((s) => s.candidateIds);
   const setCandidateIds = usePlanStore((s) => s.setCandidateIds);
+  const localSwipes = usePlanStore((s) => s.swipes);
   const setSwipe = usePlanStore((s) => s.setSwipe);
+  const setFromPlace = usePlanStore((s) => s.setFromPlace);
 
   const [detail, setDetail] = useState<Place | null>(null);
   const [swipedCount, setSwipedCount] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
 
   const isLiveHop = !!hop;
 
@@ -84,15 +88,23 @@ export default function PlanMatchesScreen() {
   };
 
   const finishDeck = () => {
-    if (isLiveHop) {
-      finishSwiping(PLACES);
-      router.push('/together/plan/datetime');
-    } else {
-      router.push('/together/plan/datetime');
-    }
+    if (isLiveHop) finishSwiping(PLACES);
+    router.push('/together/plan/datetime');
+  };
+
+  const selectAndContinue = (placeId: string) => {
+    setFromPlace(placeId);
+    finishDeck();
   };
 
   const done = swipedCount >= total && total > 0;
+
+  // Best-fit-ranked (candidates are already score-sorted), narrowed to what
+  // you actually liked — falls back to the full ranked deck if you passed on
+  // everything, so the reveal always has something to show.
+  const youSwipes = isLiveHop ? hop!.members.find((m) => m.id === YOU_ID)?.swipes ?? {} : localSwipes;
+  const liked = candidates.filter((p) => youSwipes[p.id]);
+  const shortlist = liked.length > 0 ? liked : candidates;
 
   return (
     <Screen scroll gutter={0} padTop={false}>
@@ -158,14 +170,24 @@ export default function PlanMatchesScreen() {
               That&apos;s the whole deck.
             </Text>
             <Text variant="body" size={13} color={colors.ink55} center style={{ marginBottom: spacing.xl }}>
-              Next up: pick a date and time that works.
+              {dismissed ? 'Pick a spot from your shortlist to move on.' : 'Here’s your best-fit shortlist.'}
             </Text>
-            <PillButton label="Continue" variant="solid" onPress={finishDeck} />
+            <PillButton
+              label={dismissed ? 'See shortlist' : 'Continue'}
+              variant="solid"
+              onPress={dismissed ? () => setDismissed(false) : finishDeck}
+            />
           </View>
         )}
       </View>
 
       <DetailPopup place={detail} onClose={() => setDetail(null)} />
+      <ShortlistReveal
+        visible={done && !dismissed}
+        places={shortlist}
+        onClose={() => setDismissed(true)}
+        onSelect={selectAndContinue}
+      />
     </Screen>
   );
 }
