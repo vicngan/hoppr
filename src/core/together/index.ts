@@ -30,3 +30,4 @@ export {
   winningSlot,
 } from './match';
 export { setHopSync, hopSync, isSimulated, noopSync, type HopSync } from './sync';
+export { buildTickets, type Ticket } from './mock-tickets';

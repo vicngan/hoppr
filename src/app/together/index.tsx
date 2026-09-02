@@ -3,19 +3,10 @@ import { useRouter } from 'expo-router';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { BrandMark } from '@/components/BrandMark';
+import { TicketsBody } from '@/components/together/TicketsBody';
 import { colors, spacing, radius } from '@/theme/tokens';
 import { useTogether } from '@/core/together';
 import type { Hop, HopStatus } from '@/core/together';
-
-/** Has an upcoming (not-yet-past) ticket worth surfacing on the hub. */
-function hasUpcomingTicket(hop: Hop | null): boolean {
-  if (!hop || hop.status !== 'planned') return false;
-  if (hop.planDate) {
-    const when = new Date(`${hop.planDate}T${hop.planTime ?? '23:59'}:00`);
-    return when.getTime() >= Date.now() - 24 * 60 * 60 * 1000; // grace window
-  }
-  return true; // slot-only planned hops (code-invite path) have no date to compare — assume upcoming
-}
 
 /** Route the resume button to the screen for the hop's current status. */
 type HopRoute =
@@ -60,6 +51,8 @@ export default function TogetherScreen() {
 
   if (!hydrated) return <Screen>{null}</Screen>;
 
+  if (hop?.status === 'planned') return <TicketsTab />;
+
   if (hop) return <ResumeHub hop={hop} onLeave={leaveHop} />;
 
   return (
@@ -86,8 +79,6 @@ export default function TogetherScreen() {
         style={{ marginBottom: spacing.lg }}
         onPress={() => router.push('/together/plan/invite')}
       />
-
-      {hasUpcomingTicket(hop) ? <TicketsEntryCard onPress={() => router.push('/together/tickets')} /> : null}
 
       <Card style={{ marginBottom: spacing.lg }}>
         <Kicker style={{ marginBottom: 10 }}>How a hop works</Kicker>
@@ -119,19 +110,31 @@ export default function TogetherScreen() {
   );
 }
 
-function TicketsEntryCard({ onPress }: { onPress: () => void }) {
+/** Together tab once the active hop has a reservation — the Tickets list replaces the resume card entirely. */
+function TicketsTab() {
+  const router = useRouter();
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.ticketsCard, pressed && { opacity: 0.9 }]}>
-      <View style={{ flex: 1 }}>
-        <Kicker style={{ marginBottom: 4 }}>Your tickets</Kicker>
-        <Text variant="body" size={13} color={colors.ink55}>
-          See what you&apos;ve got planned, past and upcoming.
-        </Text>
+    <>
+      <AppHeader variant="root" />
+      <View style={styles.titleBlock}>
+        <View style={styles.ticketsTitleRow}>
+          <View style={styles.titleRow}>
+            <BrandMark size={22} style={styles.titleMark} />
+            <Text variant="display" size={30}>
+              Your tickets
+            </Text>
+          </View>
+          <Pressable onPress={() => router.push('/together/plan/invite')} style={styles.startAnotherBtn}>
+            <Text variant="bodyMedium" size={12} color={colors.accent}>
+              Start another hop
+            </Text>
+          </Pressable>
+        </View>
       </View>
-      <Text variant="kicker" size={11} color={colors.accent}>
-        Open →
-      </Text>
-    </Pressable>
+      <Screen padTop={false}>
+        <TicketsBody onPlan={() => router.push('/together/plan/invite')} />
+      </Screen>
+    </>
   );
 }
 
@@ -149,8 +152,6 @@ function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
         </View>
       </View>
       <Screen padTop={false}>
-
-      {hasUpcomingTicket(hop) ? <TicketsEntryCard onPress={() => router.push('/together/tickets')} /> : null}
 
       <Card accent style={{ marginBottom: spacing.lg }}>
         <View style={styles.avatarRow}>
@@ -196,16 +197,12 @@ const styles = StyleSheet.create({
   titleBlock: { paddingHorizontal: spacing.xl, paddingBottom: 12, backgroundColor: colors.paper },
   titleRow: { flexDirection: 'row', alignItems: 'center' },
   titleMark: { marginRight: 8 },
-  ticketsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    backgroundColor: colors.card,
-    marginBottom: spacing.lg,
+  ticketsTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  startAnotherBtn: {
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.fill,
   },
   step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 7 },
   num: { width: 20, paddingTop: 3 },
