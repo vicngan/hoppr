@@ -201,7 +201,13 @@ export function AppHeader({
 
 const styles = StyleSheet.create({
   root: {
-    flex: 0,
+    // `flex: 0` compiles on web to `flex-basis: 0%` (CSS shorthand semantics,
+    // unlike Yoga's `auto`), collapsing this header to its padding alone and
+    // making its measured height wrong for whatever sibling follows it (a
+    // screen's own fixed title block, e.g. profile.tsx's avatar/name row).
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -214,11 +220,7 @@ const styles = StyleSheet.create({
   sticky: { position: 'sticky' as unknown as 'relative', top: 0, zIndex: 5 },
   rootSub: { paddingTop: 76 },
   rootRoot: { paddingTop: 68 },
-  // Explicit flexBasis override: the shared `root` style's `flex: 0` compiles
-  // on web to `flex-basis: 0%` (CSS shorthand semantics, unlike Yoga's
-  // `auto`), which collapses this column to its padding alone and lets the
-  // stacked step-label/heading block render outside its own box.
-  wizardRoot: { flexDirection: 'column', alignItems: 'stretch', flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
+  wizardRoot: { flexDirection: 'column', alignItems: 'stretch' },
   wizardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', position: 'relative' },
   wizardSide: { width: 34, alignItems: 'flex-start' },
   wizardSideRight: { alignItems: 'flex-end' },
