@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, PillButton } from '@/components/ui';
+import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { MonthCalendar } from '@/components/together/MonthCalendar';
 import { WheelTimePicker } from '@/components/together/WheelTimePicker';
@@ -38,16 +38,18 @@ export default function PlanDatetimeScreen() {
           When works?
         </Text>
 
-        <Kicker style={{ marginBottom: spacing.sm }}>Date</Kicker>
-        <MonthCalendar value={date} onChange={(iso) => setDateTime(iso, time)} />
+        <Card style={{ padding: spacing.lg }}>
+          <MonthCalendar value={date} onChange={(iso) => setDateTime(iso, time)} />
+        </Card>
 
-        <Kicker style={{ marginTop: spacing.xl, marginBottom: spacing.sm }}>Time</Kicker>
-        <WheelTimePicker value={time} onChange={(t) => setDateTime(date, t)} />
+        <Card style={{ marginTop: spacing.lg, padding: spacing.lg }}>
+          <WheelTimePicker value={time} onChange={(t) => setDateTime(date, t)} />
+        </Card>
 
         <PillButton
           label="Confirm"
           variant="solid"
-          style={{ marginTop: spacing.xxl, opacity: date && time ? 1 : 0.4 }}
+          style={{ marginTop: spacing.xxxl, opacity: date && time ? 1 : 0.4 }}
           onPress={date && time ? () => router.push('/together/plan/results') : undefined}
         />
       </View>
