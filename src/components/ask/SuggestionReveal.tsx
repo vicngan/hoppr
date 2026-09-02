@@ -14,6 +14,7 @@ import { Text, Kicker } from '@/components/ui';
 import { PlaceImage } from '@/components/PlaceImage';
 import { colors, radius, spacing, shadow } from '@/theme/tokens';
 import { fmtDistance } from '@/core/discovery';
+import { useUnits } from '@/core/units-store';
 import { type RankedPlace } from '@/core/engine';
 
 type Props = {
@@ -40,6 +41,7 @@ const SPARKLES = [
  */
 export function SuggestionReveal({ visible, onClose, candidates }: Props) {
   const router = useRouter();
+  const unit = useUnits((s) => s.unit);
   const [mainIndex, setMainIndex] = useState(0);
   // Reset to the top pick each time the popup opens — adjusting state during
   // render (React's documented pattern for this) rather than in an effect,
@@ -112,7 +114,7 @@ export function SuggestionReveal({ visible, onClose, candidates }: Props) {
                     {main.place.name}
                   </Text>
                   <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 6, marginBottom: 8 }}>
-                    {main.place.area} · {fmtDistance(main.distanceMi)}
+                    {main.place.area} · {fmtDistance(main.distanceMi, unit)}
                   </Text>
                   <Text variant="body" size={13} color={colors.ink72} numberOfLines={2}>
                     {main.reason}

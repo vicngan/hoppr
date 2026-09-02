@@ -25,6 +25,10 @@ type LocationState = {
   useCurrentLocation: () => Promise<void>;
   /** switch to a saved location's fixed coords */
   selectSaved: (id: string) => void;
+  /** add a location (already-geocoded) to the saved list and switch to it */
+  addSavedLocation: (label: string, coords: Coords) => void;
+  /** remove a saved location; switches back to "current" if it was active */
+  removeSavedLocation: (id: string) => void;
   /** resolve whatever mode was persisted; call once after rehydration */
   initLocation: () => Promise<void>;
 };
@@ -82,6 +86,18 @@ export const useLocationStore = create<LocationState>()(
           return;
         }
         set({ mode: { savedId: id }, coords: loc.coords, label: loc.label, precise: false, status: 'granted' });
+      },
+
+      addSavedLocation: (label, coords) => {
+        const id = `saved_${Date.now()}`;
+        set((s) => ({ savedLocations: [...s.savedLocations, { id, label, coords }] }));
+        get().selectSaved(id);
+      },
+
+      removeSavedLocation: (id) => {
+        const wasActive = typeof get().mode !== 'string' && (get().mode as { savedId: string }).savedId === id;
+        set((s) => ({ savedLocations: s.savedLocations.filter((l) => l.id !== id) }));
+        if (wasActive) get().useCurrentLocation();
       },
 
       initLocation: async () => {

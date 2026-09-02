@@ -11,6 +11,7 @@ import { useRanked, fmtDistance } from '@/core/discovery';
 import { isHiddenGem } from '@/core/places';
 import { useLibrary } from '@/core/library/store';
 import { useOnboarding } from '@/core/onboarding/store';
+import { useUnits } from '@/core/units-store';
 import { computeStreak } from '@/core/library/streak';
 
 /**
@@ -32,6 +33,7 @@ import { computeStreak } from '@/core/library/streak';
  */
 export default function HomeScreen() {
   const router = useRouter();
+  const unit = useUnits((s) => s.unit);
   const { ranked, loading } = useRanked();
   const ratings = useLibrary((s) => s.ratings);
   const name = useOnboarding((s) => s.name);
@@ -122,7 +124,7 @@ export default function HomeScreen() {
                     {r.place.name}
                   </Text>
                   <Text variant="kicker" size={9} color={colors.ink45}>
-                    {r.place.area} · {fmtDistance(r.distanceMi)}
+                    {r.place.area} · {fmtDistance(r.distanceMi, unit)}
                   </Text>
                 </Pressable>
               ))}

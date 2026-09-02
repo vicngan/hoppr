@@ -4,6 +4,7 @@ import { Text, Kicker } from '@/components/ui';
 import { PlaceCard, placeMeta } from '@/components/PlaceCard';
 import { PlaceImage } from '@/components/PlaceImage';
 import { colors, radius, spacing } from '@/theme/tokens';
+import { useUnits } from '@/core/units-store';
 import type { RankedPlace } from '@/core/engine';
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
  */
 export function MapSheet({ ranked, expanded, onToggle }: Props) {
   const router = useRouter();
+  const unit = useUnits((s) => s.unit);
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -67,7 +69,7 @@ export function MapSheet({ ranked, expanded, onToggle }: Props) {
                     {rp.place.name}
                   </Text>
                   <Text variant="kicker" size={9} color={colors.ink45} style={{ marginTop: 4 }} numberOfLines={1}>
-                    {placeMeta(rp)}
+                    {placeMeta(rp, unit)}
                   </Text>
                 </View>
                 <Text variant="kicker" size={10} color={colors.ink45}>

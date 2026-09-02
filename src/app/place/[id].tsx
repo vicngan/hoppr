@@ -10,6 +10,7 @@ import { colors, radius, spacing, gradientPlaceholders } from '@/theme/tokens';
 import { deriveSpecs, placeBadges, CATEGORY_LABEL } from '@/core/places';
 import { usePlace } from '@/core/places-store';
 import { useRanked, fmtDistance } from '@/core/discovery';
+import { useUnits } from '@/core/units-store';
 import { useLibrary, selectIsSaved, selectRating } from '@/core/library/store';
 import { useTaste } from '@/core/taste/store';
 import { useMenu, useMenuStore } from '@/core/menu/store';
@@ -58,6 +59,7 @@ export default function PlaceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { ranked } = useRanked();
+  const unit = useUnits((s) => s.unit);
   const place = usePlace(id);
   const saved = useLibrary(selectIsSaved(id ?? ''));
   const rating = useLibrary(selectRating(id ?? ''));
@@ -86,7 +88,7 @@ export default function PlaceScreen() {
   }
 
   const badges = placeBadges(place);
-  const meta = [CATEGORY_LABEL[place.category], place.area, fmtDistance(rp?.distanceMi ?? null)]
+  const meta = [CATEGORY_LABEL[place.category], place.area, fmtDistance(rp?.distanceMi ?? null, unit)]
     .filter(Boolean)
     .join(' · ');
   const gradient = gradientPlaceholders[hashIndex(place.id, gradientPlaceholders.length)];
@@ -156,7 +158,7 @@ export default function PlaceScreen() {
             {rp?.distanceMi != null ? (
               <View style={styles.chip}>
                 <Text variant="bodyMedium" size={12} color={colors.ink70}>
-                  {fmtDistance(rp.distanceMi)}
+                  {fmtDistance(rp.distanceMi, unit)}
                 </Text>
               </View>
             ) : null}

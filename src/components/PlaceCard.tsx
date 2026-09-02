@@ -6,11 +6,12 @@ import { colors } from '@/theme/tokens';
 import { mapsConfigured } from '@/core/maps';
 import { CATEGORY_LABEL } from '@/core/places';
 import { fmtDistance } from '@/core/discovery';
+import { useUnits, type DistanceUnit } from '@/core/units-store';
 import type { RankedPlace } from '@/core/engine';
 
 /** Build the mono meta line, e.g. "Cafe · Kerrytown · 0.4 mi". */
-export function placeMeta(rp: RankedPlace): string {
-  return [CATEGORY_LABEL[rp.place.category], rp.place.area, fmtDistance(rp.distanceMi)]
+export function placeMeta(rp: RankedPlace, unit: DistanceUnit = 'mi'): string {
+  return [CATEGORY_LABEL[rp.place.category], rp.place.area, fmtDistance(rp.distanceMi, unit)]
     .filter(Boolean)
     .join(' · ');
 }
@@ -18,6 +19,7 @@ export function placeMeta(rp: RankedPlace): string {
 /** The 158px tappable card used in Discover's horizontal rows. */
 export function PlaceCard({ rp }: { rp: RankedPlace }) {
   const router = useRouter();
+  const unit = useUnits((s) => s.unit);
   return (
     <Pressable
       onPress={() => router.push(`/place/${rp.place.id}`)}
@@ -38,7 +40,7 @@ export function PlaceCard({ rp }: { rp: RankedPlace }) {
         {rp.place.name}
       </Text>
       <Text variant="kicker" size={9} color={colors.ink45} style={styles.meta} numberOfLines={1}>
-        {placeMeta(rp)}
+        {placeMeta(rp, unit)}
       </Text>
     </Pressable>
   );

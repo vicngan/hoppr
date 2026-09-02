@@ -11,6 +11,7 @@ import { aiQuestionAvailable, aiNextQuestion, type AskedContext } from './ai/que
 import { TAGS, type Tag } from './taste/tags';
 import { isHiddenGem, type Place } from './places';
 import type { Question } from './questions';
+import type { DistanceUnit } from './units-store';
 
 /** How many top rules-candidates we hand to Claude to re-rank. */
 const RERANK_N = 20;
@@ -209,7 +210,10 @@ export function buildRows(ranked: RankedPlace[], learned: boolean): DiscoverRow[
 }
 
 /** Format a distance for the mono meta line. */
-export function fmtDistance(mi: number | null): string {
+const MI_TO_KM = 1.60934;
+
+export function fmtDistance(mi: number | null, unit: DistanceUnit = 'mi'): string {
   if (mi == null) return '';
-  return `${mi < 0.1 ? '0.1' : mi.toFixed(1)} mi`;
+  const value = unit === 'km' ? mi * MI_TO_KM : mi;
+  return `${value < 0.1 ? '0.1' : value.toFixed(1)} ${unit}`;
 }

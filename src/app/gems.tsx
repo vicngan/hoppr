@@ -8,6 +8,7 @@ import { GemIcon } from '@/theme/icons';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { useRanked, fmtDistance } from '@/core/discovery';
 import { isHiddenGem } from '@/core/places';
+import { useUnits } from '@/core/units-store';
 
 /**
  * Hidden gems list. `isHiddenGem` (rating ≥4.4, ≤200 reviews) already exists
@@ -15,6 +16,7 @@ import { isHiddenGem } from '@/core/places';
  */
 export default function GemsScreen() {
   const router = useRouter();
+  const unit = useUnits((s) => s.unit);
   const { ranked, loading } = useRanked();
   const gems = useMemo(() => ranked.filter((r) => isHiddenGem(r.place)), [ranked]);
 
@@ -78,7 +80,7 @@ export default function GemsScreen() {
                       {r.place.name}
                     </Text>
                     <Kicker size={10} color={colors.ink45} style={{ marginVertical: 6 }}>
-                      {r.place.area} · {fmtDistance(r.distanceMi)}
+                      {r.place.area} · {fmtDistance(r.distanceMi, unit)}
                     </Kicker>
                     <Text variant="body" size={12} color={colors.ink60} numberOfLines={2}>
                       {r.place.blurb}

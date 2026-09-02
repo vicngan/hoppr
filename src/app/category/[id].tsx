@@ -6,12 +6,14 @@ import { BackButton } from '@/components/BackButton';
 import { colors, radius } from '@/theme/tokens';
 import { useRanked } from '@/core/discovery';
 import { placeMeta } from '@/components/PlaceCard';
+import { useUnits } from '@/core/units-store';
 
 /** Vertical list of ranked places (a "see all" from a Discover row). */
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { ranked } = useRanked();
+  const unit = useUnits((s) => s.unit);
 
   return (
     <Screen contentStyle={{ paddingTop: 60 }}>
@@ -35,7 +37,7 @@ export default function CategoryScreen() {
                 </Text>
               </View>
               <Text variant="kicker" size={9} color={colors.ink45} style={{ marginVertical: 6 }}>
-                {placeMeta(rp)}
+                {placeMeta(rp, unit)}
               </Text>
               <Text variant="body" size={12} color={colors.ink70}>
                 {rp.reason}

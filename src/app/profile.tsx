@@ -76,7 +76,7 @@ export default function ProfileScreen() {
       />
       <View style={styles.headBlock}>
         <View style={styles.head}>
-          {photoUri ? (
+          {photoUri && photoUri !== 'placeholder' ? (
             <Image source={{ uri: photoUri }} style={styles.avatarImg} />
           ) : (
             <LinearGradient
