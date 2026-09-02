@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Screen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { WhereItsGonnaBe } from '@/components/together/WhereItsGonnaBe';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing, gradientPlaceholders } from '@/theme/tokens';
 import { PLACES, CATEGORY_LABEL, type Place } from '@/core/places';
 import { useTaste } from '@/core/taste/store';
 import { applyWeightDeltas } from '@/core/taste/profile';
@@ -94,11 +95,17 @@ export default function PlanResultsScreen() {
           Here&apos;s what each person swiped toward.
         </Text>
 
-        {members.map((m) => {
+        {members.map((m, i) => {
           const topId = topPickFor(m, candidates);
           const place = candidates.find((p) => p.id === topId);
+          const gradient = gradientPlaceholders[i % gradientPlaceholders.length];
           return (
-            <View key={m.id} style={styles.card}>
+            <LinearGradient
+              key={m.id}
+              colors={[gradient.from, gradient.to]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.card}>
               <View style={{ flex: 1 }}>
                 {place ? (
                   <>
@@ -125,7 +132,7 @@ export default function PlanResultsScreen() {
                   {m.id === YOU_ID ? 'YOU' : m.name.toUpperCase()}
                 </Text>
               </View>
-            </View>
+            </LinearGradient>
           );
         })}
 
@@ -154,7 +161,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.ink,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.sm,

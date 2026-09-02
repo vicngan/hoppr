@@ -36,46 +36,52 @@ export function WhereItsGonnaBe({ visible, tallies, places, onClose, onReserve }
 
   if (!main) return null;
 
+  const reserve = (placeId: string) => {
+    // Close before handing off — the wizard navigates on `onReserve`, and the
+    // reveal shouldn't still be visible/sliding away during that transition.
+    onClose();
+    onReserve(placeId);
+  };
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={styles.centerWrap}>
           <Pressable onPress={(e) => e.stopPropagation()} style={styles.mainCard}>
-            <PlaceImage coords={main.place.coords} photo={main.place.photo} width="100%" height={200} radius={0}>
-              {main.tally.unanimous ? (
-                <View style={styles.matchBadge}>
-                  <Text variant="kicker" size={10} color={colors.onDark}>
-                    Unanimous
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.matchBadge}>
-                  <Text variant="kicker" size={10} color={colors.onDark}>
-                    {main.tally.likes} like{main.tally.likes === 1 ? '' : 's'}
-                  </Text>
-                </View>
-              )}
-            </PlaceImage>
-            <View style={styles.mainBody}>
-              <Kicker accent size={10} style={{ marginBottom: 6 }}>
-                Where it&apos;s gonna be
-              </Kicker>
-              <Text variant="serif" size={24}>
-                {main.place.name}
-              </Text>
-              <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 6, marginBottom: 8 }}>
-                {[CATEGORY_LABEL[main.place.category], main.place.area].filter(Boolean).join(' · ')}
-              </Text>
-              <Text variant="body" size={13} color={colors.ink72} numberOfLines={2}>
-                {main.place.blurb}
-              </Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.mainScroll}>
+              <PlaceImage coords={main.place.coords} photo={main.place.photo} width="100%" height={200} radius={0}>
+                {main.tally.unanimous ? (
+                  <View style={styles.matchBadge}>
+                    <Text variant="kicker" size={10} color={colors.onDark}>
+                      Unanimous
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.matchBadge}>
+                    <Text variant="kicker" size={10} color={colors.onDark}>
+                      {main.tally.likes} like{main.tally.likes === 1 ? '' : 's'}
+                    </Text>
+                  </View>
+                )}
+              </PlaceImage>
+              <View style={styles.mainBody}>
+                <Kicker accent size={10} style={{ marginBottom: 6 }}>
+                  Where it&apos;s gonna be
+                </Kicker>
+                <Text variant="serif" size={24}>
+                  {main.place.name}
+                </Text>
+                <Text variant="kicker" size={10} color={colors.ink45} style={{ marginTop: 6, marginBottom: 8 }}>
+                  {[CATEGORY_LABEL[main.place.category], main.place.area].filter(Boolean).join(' · ')}
+                </Text>
+                <Text variant="body" size={13} color={colors.ink72}>
+                  {main.place.blurb}
+                </Text>
+              </View>
+            </ScrollView>
 
-              <PillButton
-                label="Reserve a table"
-                variant="solid"
-                style={{ marginTop: spacing.lg }}
-                onPress={() => onReserve(main.place.id)}
-              />
+            <View style={styles.reserveFooter}>
+              <PillButton label="Reserve a table" variant="solid" onPress={() => reserve(main.place.id)} />
             </View>
           </Pressable>
 
@@ -120,6 +126,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     overflow: 'hidden',
     ...shadow.card,
+  },
+  mainScroll: { maxHeight: 340 },
+  reserveFooter: {
+    padding: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.ink10,
+    backgroundColor: colors.card,
   },
   matchBadge: {
     alignSelf: 'flex-start',

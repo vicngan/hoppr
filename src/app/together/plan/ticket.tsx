@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, PillButton } from '@/components/ui';
+import ConfettiCannon from 'react-native-confetti-cannon';
+import { Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
-import { colors, spacing, radius, shadow } from '@/theme/tokens';
+import { colors, spacing, radius, shadow, gradientPlaceholders } from '@/theme/tokens';
 import { usePlace } from '@/core/places-store';
 import { CATEGORY_LABEL } from '@/core/places';
 import { useTogether } from '@/core/together';
@@ -18,6 +19,7 @@ function fmtDate(iso: string | null): string {
 /** Step 8 of 8, terminal — boarding-pass confirmation. "Done" → /home. */
 export default function PlanTicketScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const hop = useTogether((s) => s.hop);
   const setPlanDetails = useTogether((s) => s.setPlanDetails);
   const fromPlace = usePlanStore((s) => s.fromPlace);
@@ -43,9 +45,15 @@ export default function PlanTicketScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
+    <View style={styles.root}>
+      <ConfettiCannon
+        count={140}
+        origin={{ x: width / 2, y: -20 }}
+        fadeOut
+        colors={[colors.accent, colors.ink, ...gradientPlaceholders.map((g) => g.to)]}
+      />
       <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <Kicker accent center style={{ marginBottom: 10 }}>
           Step 8 of 8 — locked in
         </Kicker>
@@ -97,10 +105,12 @@ export default function PlanTicketScreen() {
             <Barcode />
           </View>
         </View>
+      </ScrollView>
 
-        <PillButton label="Done" variant="solid" style={{ marginTop: spacing.xxl }} onPress={done} />
+      <View style={styles.footer}>
+        <PillButton label="Done" variant="solid" onPress={done} />
       </View>
-    </Screen>
+    </View>
   );
 }
 
@@ -117,7 +127,9 @@ function Barcode() {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.paper },
   body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
+  footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.lg, backgroundColor: colors.paper },
   pass: { marginTop: spacing.md, backgroundColor: colors.ink, borderRadius: radius.sheet, overflow: 'hidden', ...shadow.card },
   passTop: { padding: 20 },
   passBottom: {

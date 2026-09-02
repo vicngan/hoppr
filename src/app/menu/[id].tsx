@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
@@ -114,6 +115,7 @@ const sheetStyles = StyleSheet.create({
  */
 export default function MenuScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const onBack = () => (router.canGoBack() ? router.back() : router.replace('/explore'));
   const place = usePlace(id);
@@ -132,6 +134,12 @@ export default function MenuScreen() {
   const [showEntry, setShowEntry] = useState(true);
   /** menu-photo sub-state — a simulated OCR result, no real vision pipeline. */
   const [showPhotoMock, setShowPhotoMock] = useState(false);
+  const [reserveToast, setReserveToast] = useState(false);
+
+  const onReserve = () => {
+    setReserveToast(true);
+    setTimeout(() => setReserveToast(false), 2200);
+  };
 
   const pick = useMemo(
     () => (place ? recommendDish(items, profile, prefs, place.category) : null),
@@ -233,7 +241,7 @@ export default function MenuScreen() {
   return (
     <>
       <AppHeader variant="sub" logo="lockup" onBack={onBack} />
-      <Screen padTop={false}>
+      <Screen padTop={false} contentStyle={{ paddingBottom: spacing.xxxl + 80 }}>
       <MenuEntrySheet
         visible={showEntry}
         onClose={() => setShowEntry(false)}
@@ -394,6 +402,23 @@ export default function MenuScreen() {
         </View>
       )}
       </Screen>
+
+      {/* sticky bottom bar */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+        <Pressable onPress={onReserve} style={styles.reserveBtn}>
+          <Text variant="bodyMedium" size={14} color={colors.onDark}>
+            Reserve a table
+          </Text>
+        </Pressable>
+      </View>
+
+      {reserveToast ? (
+        <View style={[styles.toast, { bottom: insets.bottom + 78 }]}>
+          <Text variant="bodyMedium" size={12} color={colors.onDark}>
+            Reservations are coming soon.
+          </Text>
+        </View>
+      ) : null}
     </>
   );
 }
@@ -555,5 +580,36 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderBottomWidth: 1,
     borderBottomColor: colors.ink08,
+  },
+  bottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: spacing.xl,
+    paddingTop: 12,
+    backgroundColor: colors.paper,
+    borderTopWidth: 1,
+    borderTopColor: colors.ink10,
+  },
+  reserveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toast: {
+    position: 'absolute',
+    left: spacing.xl,
+    right: spacing.xl,
+    backgroundColor: colors.ink,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
   },
 });

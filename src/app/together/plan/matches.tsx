@@ -93,6 +93,10 @@ export default function PlanMatchesScreen() {
   };
 
   const selectAndContinue = (placeId: string) => {
+    // Close the reveal before navigating — React Navigation keeps this screen
+    // mounted underneath the pushed route, so a still-`visible` Modal would
+    // otherwise keep rendering on top of everything after it.
+    setDismissed(true);
     setFromPlace(placeId);
     finishDeck();
   };
