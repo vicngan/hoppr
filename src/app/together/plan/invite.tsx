@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from 'react-native';
+import { View, StyleSheet, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, Kicker, Card, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceImage } from '@/components/PlaceImage';
 import { colors, spacing, radius } from '@/theme/tokens';
@@ -55,14 +55,24 @@ export default function PlanInviteScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <AppHeader
-        variant="wizard"
-        onBack={() => router.back()}
-        stepLabel="Step 1 of 8"
-        heading="Invite the table."
-      />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+    <WizardScreen
+      header={
+        <AppHeader
+          variant="wizard"
+          onBack={() => router.back()}
+          stepLabel="Step 1 of 8"
+          heading="Invite the table."
+        />
+      }
+      footer={
+        <PillButton
+          label={invitees.length < 1 ? 'Add at least one friend' : 'Continue'}
+          variant="solid"
+          style={{ opacity: invitees.length < 1 ? 0.4 : 1 }}
+          onPress={invitees.length < 1 ? undefined : () => router.push('/together/plan/quiz')}
+        />
+      }
+      contentStyle={styles.body}>
         <Text variant="serif" size={17} color={colors.ink80} style={{ marginBottom: spacing.lg }}>
           By email or phone, with a shareable code, or a few Hoppr friends — everyone
           answers privately, then you swipe together.
@@ -170,20 +180,11 @@ export default function PlanInviteScreen() {
             );
           })}
         </View>
-
-        <PillButton
-          label={invitees.length < 1 ? 'Add at least one friend' : 'Continue'}
-          variant="solid"
-          style={{ marginTop: spacing.lg, opacity: invitees.length < 1 ? 0.4 : 1 }}
-          onPress={invitees.length < 1 ? undefined : () => router.push('/together/plan/quiz')}
-        />
-      </ScrollView>
-    </View>
+    </WizardScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.paper },
   body: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxxl },
   contactRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   contactInput: {

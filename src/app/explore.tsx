@@ -7,7 +7,7 @@ import { Text, Kicker } from '@/components/ui';
 import { PlaceCard } from '@/components/PlaceCard';
 import { CategoryPills } from '@/components/explore/CategoryPills';
 import { MapSheet } from '@/components/explore/MapSheet';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing, shadow } from '@/theme/tokens';
 import { ExploreIcon, TogetherIcon, ArrowRightIcon } from '@/theme/icons';
 import { useRanked, buildRows } from '@/core/discovery';
 import { CATEGORY_LABEL, isHiddenGem, type PlaceCategory } from '@/core/places';
@@ -94,6 +94,7 @@ export default function ExploreScreen() {
         </Pressable>
       </View>
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing.xxxl }}
         showsVerticalScrollIndicator={false}>
         <View style={styles.searchWrap}>
@@ -143,24 +144,21 @@ export default function ExploreScreen() {
             </View>
           ))}
         </View>
+      </ScrollView>
 
+      <View style={styles.ctaWrap}>
         <Pressable
           onPress={() => router.push('/together/plan/invite')}
           style={({ pressed }) => [styles.cta, pressed && { opacity: 0.92 }]}>
           <View style={styles.ctaIconWrap}>
-            <TogetherIcon size={20} color={colors.onDark} />
+            <TogetherIcon size={16} color={colors.onDark} />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="bodyMedium" size={15} color={colors.onDark}>
-              Plan something together
-            </Text>
-            <Text variant="body" size={12} color="rgba(247,242,232,0.6)" style={{ marginTop: 4 }}>
-              Invite someone, answer a few questions, Hoppr finds the match
-            </Text>
-          </View>
-          <ArrowRightIcon size={16} color={colors.onDark} />
+          <Text variant="bodyMedium" size={14} color={colors.onDark} style={{ flex: 1 }}>
+            Plan something together
+          </Text>
+          <ArrowRightIcon size={15} color={colors.onDark} />
         </Pressable>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -226,20 +224,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
   },
+  ctaWrap: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.paper,
+  },
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    marginHorizontal: spacing.xl,
-    marginTop: 8,
+    gap: spacing.sm,
     backgroundColor: colors.ink,
-    borderRadius: radius.xxl,
-    padding: spacing.lg,
+    borderRadius: radius.pill,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    ...shadow.card,
   },
   ctaIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',

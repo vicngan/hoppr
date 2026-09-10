@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing } from '@/theme/tokens';
 import { usePlace } from '@/core/places-store';
@@ -41,9 +41,23 @@ export default function PlanReserveScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
+    <WizardScreen
+      header={<AppHeader variant="wizard" onBack={() => router.back()} />}
+      footer={
+        <>
+          <PillButton
+            label={reserving ? 'Reserving…' : 'Reserve the table'}
+            variant="outline"
+            selected
+            style={{ opacity: reserving ? 0.6 : 1 }}
+            onPress={reserving ? undefined : reserve}
+          />
+          <Text variant="body" size={12} color={colors.ink45} center style={{ marginTop: spacing.sm }}>
+            Live reservations aren&apos;t connected yet — this holds your spot in Hoppr.
+          </Text>
+        </>
+      }
+      contentStyle={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 6 of 8
         </Kicker>
@@ -66,19 +80,7 @@ export default function PlanReserveScreen() {
             <Stat label="Party" value={`${partySize} ${partySize === 1 ? 'guest' : 'guests'}`} />
           </View>
         </View>
-
-        <PillButton
-          label={reserving ? 'Reserving…' : 'Reserve the table'}
-          variant="outline"
-          selected
-          style={{ marginTop: spacing.lg, opacity: reserving ? 0.6 : 1 }}
-          onPress={reserving ? undefined : reserve}
-        />
-        <Text variant="body" size={12} color={colors.ink45} center style={{ marginTop: spacing.sm }}>
-          Live reservations aren&apos;t connected yet — this holds your spot in Hoppr.
-        </Text>
-      </View>
-    </Screen>
+    </WizardScreen>
   );
 }
 

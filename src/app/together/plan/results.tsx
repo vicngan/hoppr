@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Screen, Text, Kicker, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { WhereItsGonnaBe } from '@/components/together/WhereItsGonnaBe';
 import { colors, radius, spacing, gradientPlaceholders } from '@/theme/tokens';
@@ -40,7 +40,8 @@ export default function PlanResultsScreen() {
 
   const [revealing, setRevealing] = useState(false);
 
-  const isLiveHop = !!hop;
+  // Excludes a lingering *planned* hop from a previous wizard pass — see quiz.tsx.
+  const isLiveHop = hop != null && hop.status !== 'planned';
 
   const candidates = useMemo(() => {
     const ids = isLiveHop ? hop!.shortlist : candidateIds;
@@ -82,9 +83,10 @@ export default function PlanResultsScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
+    <WizardScreen
+      header={<AppHeader variant="wizard" onBack={() => router.back()} />}
+      footer={<PillButton label="Where's it gonna be?" variant="solid" onPress={() => setRevealing(true)} />}
+      contentStyle={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 5 of 8
         </Kicker>
@@ -136,14 +138,6 @@ export default function PlanResultsScreen() {
           );
         })}
 
-        <PillButton
-          label="Where's it gonna be?"
-          variant="solid"
-          style={{ marginTop: spacing.lg }}
-          onPress={() => setRevealing(true)}
-        />
-      </View>
-
       <WhereItsGonnaBe
         visible={revealing}
         tallies={tallies}
@@ -151,7 +145,7 @@ export default function PlanResultsScreen() {
         onClose={() => setRevealing(false)}
         onReserve={proceed}
       />
-    </Screen>
+    </WizardScreen>
   );
 }
 

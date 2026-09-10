@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
@@ -39,8 +39,7 @@ export default function PlanJoinScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
+    <WizardScreen header={<AppHeader variant="wizard" onBack={() => router.back()} />}>
       <View style={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           No account needed
@@ -97,7 +96,7 @@ export default function PlanJoinScreen() {
           Drops you into a hop with two friends already answering.
         </Text>
       </View>
-    </Screen>
+    </WizardScreen>
   );
 }
 

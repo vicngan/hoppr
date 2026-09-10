@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { Text, Kicker, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing, radius, shadow, gradientPlaceholders } from '@/theme/tokens';
 import { usePlace } from '@/core/places-store';
@@ -52,8 +52,10 @@ export default function PlanTicketScreen() {
         fadeOut
         colors={[colors.accent, colors.ink, ...gradientPlaceholders.map((g) => g.to)]}
       />
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <WizardScreen
+        header={<AppHeader variant="wizard" onBack={() => router.back()} />}
+        footer={<PillButton label="Done" variant="solid" onPress={done} />}
+        contentStyle={styles.body}>
         <Kicker accent center style={{ marginBottom: 10 }}>
           Step 8 of 8 — locked in
         </Kicker>
@@ -105,11 +107,7 @@ export default function PlanTicketScreen() {
             <Barcode />
           </View>
         </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <PillButton label="Done" variant="solid" onPress={done} />
-      </View>
+      </WizardScreen>
     </View>
   );
 }
@@ -129,7 +127,6 @@ function Barcode() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
   body: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
-  footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.lg, backgroundColor: colors.paper },
   pass: { marginTop: spacing.md, backgroundColor: colors.ink, borderRadius: radius.sheet, overflow: 'hidden', ...shadow.card },
   passTop: { padding: 20 },
   passBottom: {

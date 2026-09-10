@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceImage } from '@/components/PlaceImage';
 import { SwipeStack } from '@/components/together/SwipeStack';
@@ -45,7 +45,8 @@ export default function PlanMatchesScreen() {
   const [swipedCount, setSwipedCount] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
-  const isLiveHop = !!hop;
+  // Excludes a lingering *planned* hop from a previous wizard pass — see quiz.tsx.
+  const isLiveHop = hop != null && hop.status !== 'planned';
 
   // Host path only: build the candidate pool once (real hop path already has
   // hop.shortlist, built by finishAnswering in quiz.tsx).
@@ -111,8 +112,7 @@ export default function PlanMatchesScreen() {
   const shortlist = liked.length > 0 ? liked : candidates;
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
+    <WizardScreen header={<AppHeader variant="wizard" onBack={() => router.back()} />}>
       <View style={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 3 of 8
@@ -192,7 +192,7 @@ export default function PlanMatchesScreen() {
         onClose={() => setDismissed(true)}
         onSelect={selectAndContinue}
       />
-    </Screen>
+    </WizardScreen>
   );
 }
 

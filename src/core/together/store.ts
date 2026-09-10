@@ -198,7 +198,7 @@ export const useTogether = create<TogetherState>()(
 
         answerFoodQuestions: (memberId, answers) => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'answering') return;
           const members = hop.members.map((m) =>
             m.id === memberId
               ? { ...m, hopAnswers: answers, profile: applyWeightDeltas(m.profile, foodAnswerDeltas(answers)) }
@@ -209,7 +209,7 @@ export const useTogether = create<TogetherState>()(
 
         finishAnswering: (places, userCoords) => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'answering') return;
           const members = hop.members.map((m) => (m.id === YOU ? { ...m, answered: true } : m));
           const everyoneIn = members.every((m) => m.answered);
           if (!everyoneIn) {
@@ -236,7 +236,7 @@ export const useTogether = create<TogetherState>()(
 
         swipe: (placeId, like) => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'swiping') return;
           const members = hop.members.map((m) => {
             if (m.id !== YOU) return m;
             const swipes = { ...m.swipes, [placeId]: like };
@@ -247,7 +247,7 @@ export const useTogether = create<TogetherState>()(
 
         finishSwiping: (places) => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'swiping') return;
           const members = hop.members.map((m) => (m.id === YOU ? { ...m, swipedDone: true } : m));
           const next = { ...hop, members };
           push({ ...next, pickId: groupPick(next, places), status: 'picked' });
@@ -255,7 +255,7 @@ export const useTogether = create<TogetherState>()(
 
         voteSlot: (slotId) => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'picked') return;
           const slotVotes: Record<string, string[]> = {};
           // your vote is exclusive across slots
           for (const slot of TIME_SLOTS) {
@@ -277,7 +277,7 @@ export const useTogether = create<TogetherState>()(
 
         lockSlot: () => {
           const hop = get().hop;
-          if (!hop) return;
+          if (!hop || hop.status !== 'picked') return;
           push({ ...hop, slotId: winningSlot(hop), status: 'planned' });
         },
 

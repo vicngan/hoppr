@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Text, PillButton, ProgressDots } from '@/components/ui';
+import { WizardScreen, Text, PillButton, ProgressDots } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { ChoicePill } from '@/components/onboarding/ChoicePill';
 import { ChoiceRow } from '@/components/onboarding/ChoiceRow';
-import { colors, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import { useTogether, YOU_ID } from '@/core/together';
 import { usePlanStore } from '@/core/together/plan-store';
 import type { HopFoodAnswers } from '@/core/together/types';
@@ -127,7 +127,10 @@ export default function PlanQuizScreen() {
   const [distance, setDistance] = useState<HopFoodAnswers['distance'] | null>(null);
 
   const question = QUESTIONS[step];
-  const isLiveHop = !!hop;
+  // Excludes a lingering *planned* hop from a previous wizard pass — only an
+  // actively-in-progress real hop (joiner path) should drive this screen; a
+  // stale planned one falls through to the host's local plan-store path below.
+  const isLiveHop = hop != null && hop.status !== 'planned';
 
   const toggleMulti = (values: string[], current: string[], set: (v: string[]) => void) => {
     const has = current.some((v) => values.includes(v));
@@ -165,16 +168,28 @@ export default function PlanQuizScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <AppHeader
-        variant="wizard"
-        onBack={() => router.back()}
-        centerText={`Question ${step + 1} of ${QUESTIONS.length}`}
-      />
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[styles.body, styles.center]}
-        showsVerticalScrollIndicator={false}>
+    <WizardScreen
+      header={
+        <AppHeader
+          variant="wizard"
+          onBack={() => router.back()}
+          centerText={`Question ${step + 1} of ${QUESTIONS.length}`}
+        />
+      }
+      footer={
+        <>
+          <PillButton
+            label={step + 1 >= QUESTIONS.length ? "That's everyone — let's swipe" : 'Next'}
+            variant="solid"
+            style={{ width: '100%', maxWidth: 340, alignSelf: 'center', opacity: canAdvance ? 1 : 0.4 }}
+            onPress={canAdvance ? next : undefined}
+          />
+          <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
+            <ProgressDots count={QUESTIONS.length} active={step} />
+          </View>
+        </>
+      }
+      contentStyle={[styles.body, styles.center]}>
         <Text variant="kicker" center style={{ marginBottom: 12 }}>
           {question.kicker}
         </Text>
@@ -243,20 +258,7 @@ export default function PlanQuizScreen() {
               ))
             : null}
         </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <PillButton
-          label={step + 1 >= QUESTIONS.length ? "That's everyone — let's swipe" : 'Next'}
-          variant="solid"
-          style={{ width: '100%', maxWidth: 340, opacity: canAdvance ? 1 : 0.4 }}
-          onPress={canAdvance ? next : undefined}
-        />
-        <View style={{ marginTop: spacing.lg }}>
-          <ProgressDots count={QUESTIONS.length} active={step} />
-        </View>
-      </View>
-    </View>
+    </WizardScreen>
   );
 }
 
@@ -265,15 +267,7 @@ function ChoicePillWrap({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.paper },
   body: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingVertical: spacing.xl },
   center: { alignItems: 'center' },
   options: { width: '100%', maxWidth: 340, gap: 9 },
-  footer: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    backgroundColor: colors.paper,
-  },
 });

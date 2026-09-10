@@ -1,12 +1,16 @@
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { Screen, Text, Kicker, Card, PillButton, StripePlaceholder } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { BrandMark } from '@/components/BrandMark';
+import { PlaceImage } from '@/components/PlaceImage';
 import { TicketsBody } from '@/components/together/TicketsBody';
 import { colors, spacing, radius } from '@/theme/tokens';
+import { TogetherIcon, ArrowRightIcon } from '@/theme/icons';
 import { useTogether } from '@/core/together';
 import type { Hop, HopStatus } from '@/core/together';
+import { usePlace } from '@/core/places-store';
+import { CATEGORY_LABEL } from '@/core/places';
 
 /** Route the resume button to the screen for the hop's current status. */
 type HopRoute =
@@ -138,8 +142,16 @@ function TicketsTab() {
   );
 }
 
+/**
+ * Together tab while a hop is active but not yet planned — a single ticket-
+ * styled card (matches `TicketsBody`'s `TicketCard`) that resumes wherever
+ * the hop's wizard step currently is, instead of the old standalone hub UI.
+ */
 function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
   const router = useRouter();
+  const picked = usePlace(hop.pickId ?? undefined);
+  const continueTo = () => router.push(statusRoute(hop.status));
+
   return (
     <>
       <AppHeader variant="root" />
@@ -147,45 +159,51 @@ function ResumeHub({ hop, onLeave }: { hop: Hop; onLeave: () => void }) {
         <View style={styles.titleRow}>
           <BrandMark size={22} style={styles.titleMark} />
           <Text variant="display" size={30}>
-            {hop.title}
+            Your tickets
           </Text>
         </View>
       </View>
       <Screen padTop={false}>
+        <Card padded={false} accent onPress={continueTo} style={{ marginBottom: spacing.lg }}>
+          {picked ? (
+            <PlaceImage coords={picked.coords} photo={picked.photo} width="100%" height={150} mapSize={700} />
+          ) : (
+            <StripePlaceholder width="100%" height={150} radius={0}>
+              <View style={styles.progressBanner}>
+                <TogetherIcon size={22} color={colors.ink55} />
+              </View>
+            </StripePlaceholder>
+          )}
+          <View style={{ padding: spacing.md }}>
+            <Kicker accent style={{ marginBottom: 4 }}>
+              {STATUS_LABEL[hop.status]}
+            </Kicker>
+            <Text variant="serif" size={20} style={{ marginBottom: 4 }}>
+              {picked ? picked.name : hop.title}
+            </Text>
+            <Text variant="kicker" size={10} color={colors.ink45} style={{ marginBottom: 10 }}>
+              {picked
+                ? [CATEGORY_LABEL[picked.category], picked.area].filter(Boolean).join(' · ')
+                : hop.code}
+            </Text>
+            <Text variant="body" size={12} color={colors.ink55} style={{ marginBottom: spacing.md }}>
+              {hop.members.map((m) => m.name).join(', ')}
+            </Text>
 
-      <Card accent style={{ marginBottom: spacing.lg }}>
-        <View style={styles.avatarRow}>
-          {hop.members.map((m) => (
-            <View key={m.id} style={styles.avatar}>
-              <Text variant="body" size={18}>
-                {m.emoji}
+            <View style={styles.continueRow}>
+              <Text variant="bodyMedium" size={13} color={colors.accent}>
+                Continue
               </Text>
+              <ArrowRightIcon size={14} color={colors.accent} />
             </View>
-          ))}
-        </View>
-        <Text variant="body" size={13} color={colors.ink55} style={{ marginBottom: spacing.md }}>
-          {hop.members.map((m) => m.name).join(', ')}
-        </Text>
-        <Kicker accent style={{ marginBottom: 4 }}>
-          {STATUS_LABEL[hop.status]}
-        </Kicker>
-        <Text variant="kicker" size={10} color={colors.ink40}>
-          {hop.code}
-        </Text>
+          </View>
+        </Card>
 
-        <PillButton
-          label="Continue"
-          variant="solid"
-          style={{ marginTop: spacing.lg }}
-          onPress={() => router.push(statusRoute(hop.status))}
-        />
-      </Card>
-
-      <Pressable onPress={onLeave} style={styles.leave}>
-        <Text variant="bodyMedium" size={13} color={colors.ink55}>
-          Leave hop
-        </Text>
-      </Pressable>
+        <Pressable onPress={onLeave} style={styles.leave}>
+          <Text variant="bodyMedium" size={13} color={colors.ink55}>
+            Leave hop
+          </Text>
+        </Pressable>
       </Screen>
     </>
   );
@@ -206,15 +224,8 @@ const styles = StyleSheet.create({
   },
   step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 7 },
   num: { width: 20, paddingTop: 3 },
-  avatarRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.sm },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.fill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  progressBanner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  continueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   leave: {
     alignSelf: 'center',
     marginTop: spacing.sm,

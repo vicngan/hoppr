@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { MonthCalendar } from '@/components/together/MonthCalendar';
 import { WheelTimePicker } from '@/components/together/WheelTimePicker';
@@ -28,9 +28,17 @@ export default function PlanDatetimeScreen() {
   }, []);
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
+    <WizardScreen
+      header={<AppHeader variant="wizard" onBack={() => router.back()} />}
+      footer={
+        <PillButton
+          label="Confirm"
+          variant="solid"
+          style={{ opacity: date && time ? 1 : 0.4 }}
+          onPress={date && time ? () => router.push('/together/plan/results') : undefined}
+        />
+      }
+      contentStyle={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 4 of 8
         </Kicker>
@@ -45,15 +53,7 @@ export default function PlanDatetimeScreen() {
         <Card style={{ marginTop: spacing.lg, padding: spacing.lg }}>
           <WheelTimePicker value={time} onChange={(t) => setDateTime(date, t)} />
         </Card>
-
-        <PillButton
-          label="Confirm"
-          variant="solid"
-          style={{ marginTop: spacing.xxxl, opacity: date && time ? 1 : 0.4 }}
-          onPress={date && time ? () => router.push('/together/plan/results') : undefined}
-        />
-      </View>
-    </Screen>
+    </WizardScreen>
   );
 }
 

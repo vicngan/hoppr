@@ -1,5 +1,6 @@
 export { Text } from './Text';
 export { Screen } from './Screen';
+export { WizardScreen } from './WizardScreen';
 export { PillButton } from './PillButton';
 export { Card } from './Card';
 export { StripePlaceholder } from './StripePlaceholder';

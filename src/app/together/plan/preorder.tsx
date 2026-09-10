@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Text, Kicker, Card, PillButton } from '@/components/ui';
+import { WizardScreen, Text, Kicker, Card, PillButton } from '@/components/ui';
 import { AppHeader } from '@/components/AppHeader';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
@@ -44,9 +44,10 @@ export default function PlanMenuScreen() {
   };
 
   return (
-    <Screen scroll gutter={0} padTop={false}>
-      <AppHeader variant="wizard" onBack={() => router.back()} />
-      <View style={styles.body}>
+    <WizardScreen
+      header={<AppHeader variant="wizard" onBack={() => router.back()} />}
+      footer={<PillButton label="Let's go!" variant="solid" onPress={letsGo} />}
+      contentStyle={styles.body}>
         <Kicker accent style={{ marginBottom: 9 }}>
           Step 7 of 8
         </Kicker>
@@ -130,10 +131,7 @@ export default function PlanMenuScreen() {
             </Text>
           ) : null}
         </View>
-
-        <PillButton label="Let's go!" variant="solid" style={{ marginTop: spacing.lg }} onPress={letsGo} />
-      </View>
-    </Screen>
+    </WizardScreen>
   );
 }
 
